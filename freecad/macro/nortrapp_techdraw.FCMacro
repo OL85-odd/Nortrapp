@@ -1,0 +1,554 @@
+# -*- coding: utf-8 -*-
+"""
+Nortrapp - Automatisk TechDraw produksjonstegning fra assembly.
+
+Hva makroen gjor:
+  1. Finner alle detaljer (deler) i aktivt assembly.
+  2. Grupperer dem til UNIKE deler (samme geometri = en gruppe, med antall).
+  3. Lager en regneark-basert kappliste/BOM (posisjon, navn, antall,
+     material, ytre lengde/bredde/tykkelse).
+  4. Side 1 "Page1_Oversikt": isometrisk + topp/front/side (projeksjonsgruppe)
+     av hele sammenstillingen, med skjulte linjer synlige, pluss BOM-tabell.
+  5. Side 2 "Page2_Detaljer": rutenett med en tegning per unike del (sett
+     ovenfra, siden hull normalt vises som sirkler der), med automatisk
+     malsetting av ytre mal, hulldiameter og hullposisjon fra hjornet
+     (origo) pa delen.
+
+Bruk:
+  - Apne/aktiver dokumentet med sammenstillingen.
+  - (Valgfritt) Velg assembly-roten (App::Part / Assembly) i modelltreet.
+    Hvis ingenting er valgt, prover makroen a finne den selv.
+  - Kjor makroen (Makro -> Makroer -> velg fil -> Kjor).
+  - Se Rapportvisning for status/advarsler underveis.
+
+Makroen er bygget defensivt: TechDraw sitt Python-API for malsetting
+varierer litt mellom FreeCAD-versjoner. Hvis en enkelt malsetting feiler,
+hopper makroen over akkurat den og fortsetter (advarsel skrives til
+rapportvisningen), i stedet for a krasje hele kjoringen.
+
+Kjent begrensning: hull oppdages kun hvis de vises som hele sirkler i
+toppvisningen (dvs. vertikale hull i flate deler - typisk for spiler/
+lister). Skra eller kant-borede hull ma males manuelt etterpa.
+"""
+
+import math
+import os
+
+import FreeCAD as App
+import Part
+
+try:
+    import FreeCADGui as Gui
+except Exception:
+    Gui = None
+
+
+# --------------------------- CONFIG ---------------------------------
+SPREADSHEET_NAME = "Nortrapp_Kappliste"
+ITEM_START_NO = 1
+ROUND_DECIMALS = 1
+DETAIL_MARGIN_MM = 15.0
+INNER_PADDING_MM = 6.0
+TEXT_BLOCK_HEIGHT_MM = 16.0
+# ----------------------------------------------------------------------
+
+
+def cleanup_previous(doc):
+    """Gjor makroen trygg a kjore flere ganger: fjerner objekter fra
+    forrige kjoring for de lages pa nytt."""
+    prefixes = (
+        "Page1_Oversikt", "Page2_Detaljer", "AssemblyViews",
+        SPREADSHEET_NAME, "Detalj_",
+    )
+    to_remove = [o.Name for o in doc.Objects if any(o.Name.startswith(p) for p in prefixes)]
+    changed = True
+    while changed and to_remove:
+        changed = False
+        remaining = []
+        for name in to_remove:
+            try:
+                doc.removeObject(name)
+                changed = True
+            except Exception:
+                remaining.append(name)
+        to_remove = remaining
+    doc.recompute()
+
+
+def find_template():
+    """Prover a finne en A4-landskap TechDraw-mal blant FreeCAD sine
+    standardmaler. Returnerer filsti eller None."""
+    res_dir = App.getResourceDir()
+    tpl_dir = os.path.join(res_dir, "Mod", "TechDraw", "Templates")
+    candidates = []
+    if os.path.isdir(tpl_dir):
+        for fn in os.listdir(tpl_dir):
+            low = fn.lower()
+            if low.endswith(".svg") and "a4" in low and "landscape" in low:
+                candidates.append(os.path.join(tpl_dir, fn))
+    if candidates:
+        candidates.sort(key=lambda p: ("iso7200" not in p.lower(), p))
+        return candidates[0]
+    return None
+
+
+def get_assembly_root():
+    doc = App.ActiveDocument
+    sel = []
+    if Gui is not None:
+        try:
+            sel = Gui.Selection.getSelection()
+        except Exception:
+            sel = []
+    if sel:
+        return sel[0]
+    for obj in doc.Objects:
+        if obj.getParentGeoFeatureGroup() is not None:
+            continue
+        if obj.TypeId == "App::Part" or obj.TypeId.startswith("Assembly::"):
+            return obj
+    return doc
+
+
+def collect_part_instances(root, world_placement=None, out=None):
+    """Vandrer rekursivt gjennom sammenstillingen og samler alle
+    detaljer med geometri (solids). Returnerer liste av dicts:
+    {source, instance, placement, shape}."""
+    if out is None:
+        out = []
+    if world_placement is None:
+        world_placement = App.Placement()
+
+    if isinstance(root, App.Document):
+        objs = [o for o in root.Objects if o.getParentGeoFeatureGroup() is None]
+    elif hasattr(root, "Group") and root.Group:
+        objs = root.Group
+    else:
+        objs = [root]
+
+    for obj in objs:
+        placement = world_placement
+        if hasattr(obj, "Placement"):
+            placement = world_placement.multiply(obj.Placement)
+
+        if obj.TypeId == "App::Link":
+            linked = obj.LinkedObject
+            if linked is None:
+                continue
+            if hasattr(linked, "Group") and linked.Group:
+                collect_part_instances(linked, placement, out)
+                continue
+            shape = getattr(linked, "Shape", None)
+            if shape is not None and not shape.isNull() and shape.Solids:
+                out.append({
+                    "source": linked,
+                    "instance": obj,
+                    "placement": placement,
+                    "shape": shape,
+                })
+            continue
+
+        if hasattr(obj, "Group") and obj.Group:
+            collect_part_instances(obj, placement, out)
+            continue
+
+        shape = getattr(obj, "Shape", None)
+        if shape is not None and not shape.isNull() and shape.Solids:
+            out.append({
+                "source": obj,
+                "instance": obj,
+                "placement": placement,
+                "shape": shape,
+            })
+
+    return out
+
+
+def normalized_fingerprint(shape):
+    """Enkel form-fingeravtrykk uavhengig av plassering/orientering:
+    sorterte bounding-box-mal + volum + areal. Brukes til a finne
+    'like' deler som ikke deler samme grunnobjekt (ikke-lenkede kopier)."""
+    local = shape.copy()
+    local.Placement = App.Placement()
+    bb = local.BoundBox
+    dims = sorted([round(bb.XLength, 1), round(bb.YLength, 1), round(bb.ZLength, 1)])
+    vol = round(local.Volume, 1)
+    area = round(local.Area, 1)
+    return (dims[0], dims[1], dims[2], vol, area)
+
+
+def group_unique_parts(instances):
+    """To-nivaers gruppering:
+    1) Samme kildeobjekt (App::Link som peker pa samme del) -> garantert lik.
+    2) Ellers, samme geometriske fingeravtrykk -> antatt lik (kan i sjeldne
+       tilfeller sla sammen speilvendte/roterte deler som "like" - sjekk
+       kapplisten manuelt for produksjon)."""
+    groups = {}
+    order = []
+    for inst in instances:
+        src = inst["source"]
+        fp = normalized_fingerprint(inst["shape"])
+        found_key = None
+        for gkey, g in groups.items():
+            if gkey[0] == "id" and gkey[1] == src.Name:
+                found_key = gkey
+                break
+            if g["fingerprint"] == fp:
+                found_key = gkey
+                break
+        if found_key is None:
+            found_key = ("id", src.Name)
+            groups[found_key] = {"fingerprint": fp, "instances": [], "rep": inst}
+            order.append(found_key)
+        groups[found_key]["instances"].append(inst)
+    return [groups[k] for k in order]
+
+
+def get_material(obj):
+    for prop in ("Material", "ShapeMaterial", "MaterialName"):
+        if hasattr(obj, prop):
+            val = getattr(obj, prop)
+            if val:
+                name = getattr(val, "Name", None)
+                return name if name else str(val)
+    return ""
+
+
+def outer_dimensions_local(shape):
+    """Ytre mal (lengde, bredde, tykkelse) sortert avtagende, uavhengig
+    av plassering/rotasjon."""
+    local = shape.copy()
+    local.Placement = App.Placement()
+    bb = local.BoundBox
+    dims = sorted([bb.XLength, bb.YLength, bb.ZLength], reverse=True)
+    return dims
+
+
+def build_spreadsheet(doc, groups):
+    sheet = doc.addObject("Spreadsheet::Sheet", SPREADSHEET_NAME)
+    headers = ["Pos", "Betegnelse", "Antall", "Material",
+               "Lengde (mm)", "Bredde (mm)", "Tykkelse (mm)"]
+    for i, h in enumerate(headers):
+        sheet.set("%s1" % chr(65 + i), h)
+
+    row = 2
+    for idx, g in enumerate(groups, start=ITEM_START_NO):
+        rep = g["rep"]
+        L, W, T = outer_dimensions_local(rep["shape"])
+        label = rep["source"].Label
+        qty = len(g["instances"])
+        material = get_material(rep["source"]) or "-"
+        vals = [idx, label, qty, material,
+                round(L, ROUND_DECIMALS), round(W, ROUND_DECIMALS), round(T, ROUND_DECIMALS)]
+        for i, v in enumerate(vals):
+            sheet.set("%s%d" % (chr(65 + i), row), str(v))
+        g["item_no"] = idx
+        g["L"], g["W"], g["T"] = L, W, T
+        row += 1
+
+    sheet.recompute()
+    return sheet
+
+
+def make_page(doc, name, template_path):
+    page = doc.addObject("TechDraw::DrawPage", name)
+    tpl = doc.addObject("TechDraw::DrawSVGTemplate", name + "_Template")
+    if template_path and os.path.isfile(template_path):
+        tpl.Template = template_path
+    page.Template = tpl
+    set_first_angle(page)
+    return page
+
+
+def set_first_angle(obj):
+    # Norge/Europa bruker forste-vinkel-projeksjon (ISO). Ikke alle
+    # FreeCAD-versjoner eksponerer denne som skriptbar egenskap her,
+    # sa vi setter den defensivt.
+    if hasattr(obj, "ProjectionType"):
+        try:
+            obj.ProjectionType = "First Angle"
+        except Exception:
+            pass
+
+
+def set_hidden_lines(view_obj):
+    """Slar pa visning av skjulte linjer (sa alle detaljer/hull er
+    synlige, ogsa de som er dekket av andre flater)."""
+    for prop in ("HardHidden", "SmoothHidden", "SeamHidden", "IsoHidden"):
+        if hasattr(view_obj, prop):
+            try:
+                setattr(view_obj, prop, True)
+            except Exception:
+                pass
+
+
+def get_page_size_mm(page):
+    tpl = page.Template
+    try:
+        return float(tpl.Width), float(tpl.Height)
+    except Exception:
+        return 297.0, 210.0
+
+
+def get_overview_source(root, instances):
+    if hasattr(root, "TypeId") and (root.TypeId == "App::Part" or root.TypeId.startswith("Assembly::")):
+        return [root]
+    return [inst["instance"] for inst in instances]
+
+
+def add_bom_table(doc, page, sheet, n_rows):
+    try:
+        table = doc.addObject("TechDraw::DrawViewTable", "Kappliste")
+        page.addView(table)
+        table.Source = sheet
+        table.CellStart = "A1"
+        table.CellEnd = "G%d" % (n_rows + 1)
+        if hasattr(table, "HasHeader"):
+            table.HasHeader = True
+        table.X = 40
+        table.Y = 30
+        doc.recompute()
+    except Exception as e:
+        App.Console.PrintWarning(
+            "Klarte ikke opprette BOM-tabell automatisk (%s).\n"
+            "Losning: I TechDraw, velg siden og bruk "
+            "'Sett inn -> Tabellvisning', pek pa regnearket '%s'.\n" % (e, sheet.Name)
+        )
+
+
+def add_overview_page(doc, source_objs, template, sheet, groups):
+    page = make_page(doc, "Page1_Oversikt", template)
+    proj = doc.addObject("TechDraw::DrawProjGroup", "AssemblyViews")
+    page.addView(proj)
+    proj.Source = source_objs
+    if hasattr(proj, "ScaleType"):
+        proj.ScaleType = "Automatic"
+    set_first_angle(proj)
+    doc.recompute()
+
+    for direction in ("Front", "Top", "Right", "Isometric"):
+        try:
+            proj.addProjection(direction)
+        except Exception as e:
+            App.Console.PrintWarning("Kunne ikke legge til %s-visning: %s\n" % (direction, e))
+    doc.recompute()
+
+    for item in getattr(proj, "Views", []):
+        set_hidden_lines(item)
+    doc.recompute()
+
+    add_bom_table(doc, page, sheet, len(groups))
+    return page
+
+
+def set_dim_references(dim, view, refs):
+    """refs: liste med subelement-navn (f.eks. ['Edge1','Edge3']) pa
+    samme view. Prover to kjente formater for References2D siden dette
+    har variert litt mellom FreeCAD-versjoner."""
+    attempts = [
+        [(view, r) for r in refs],
+        [(view, refs)],
+    ]
+    last_err = None
+    for attempt in attempts:
+        try:
+            dim.References2D = attempt
+            return True
+        except Exception as e:
+            last_err = e
+    App.Console.PrintWarning("Klarte ikke sette referanser for %s: %s\n" % (dim.Name, last_err))
+    return False
+
+
+def add_distance_dim(doc, page, view, ref1, ref2, dim_type, name_hint):
+    try:
+        dim = doc.addObject("TechDraw::DrawViewDimension", "%s_%s" % (view.Name, name_hint))
+        page.addView(dim)
+        dim.Type = dim_type
+        if not set_dim_references(dim, view, [ref1, ref2]):
+            return None
+        doc.recompute()
+        return dim
+    except Exception as e:
+        App.Console.PrintWarning("Kunne ikke opprette %s-mal (%s): %s\n" % (dim_type, name_hint, e))
+        return None
+
+
+def get_view_edges(view):
+    edges = []
+    i = 0
+    while i < 2000:
+        try:
+            e = view.getEdgeByIndex(i)
+        except Exception:
+            break
+        if e is None:
+            break
+        edges.append((i, e))
+        i += 1
+    return edges
+
+
+def dimension_part_view(doc, page, view, g):
+    doc.recompute()
+    edges = get_view_edges(view)
+    if not edges:
+        App.Console.PrintWarning("Ingen kanter funnet for %s, hopper over malsetting.\n" % view.Name)
+        return
+
+    def edge_name(idx):
+        return "Edge%d" % (idx + 1)
+
+    xs, ys = [], []
+    for idx, e in edges:
+        bb = e.BoundBox
+        xs.append((bb.XMin, idx))
+        xs.append((bb.XMax, idx))
+        ys.append((bb.YMin, idx))
+        ys.append((bb.YMax, idx))
+    _, xmin_idx = min(xs)
+    _, xmax_idx = max(xs)
+    _, ymin_idx = min(ys)
+    _, ymax_idx = max(ys)
+
+    # Ytre bredde og hoyde (= lengde/bredde pa delen sett ovenfra)
+    add_distance_dim(doc, page, view, edge_name(xmin_idx), edge_name(xmax_idx), "DistanceX", "Bredde")
+    add_distance_dim(doc, page, view, edge_name(ymin_idx), edge_name(ymax_idx), "DistanceY", "Lengde")
+
+    # Finn sirkulaere kanter (hull sett rett ovenfra)
+    holes = []
+    for idx, e in edges:
+        try:
+            if e.Closed and isinstance(e.Curve, Part.Circle):
+                holes.append((idx, e.Curve.Center, e.Curve.Radius))
+        except Exception:
+            continue
+
+    # Deduplisering: samme hull kan bestaa av flere bue-kanter
+    unique_holes = []
+    for idx, c, r in holes:
+        if any(abs(uc.x - c.x) < 0.01 and abs(uc.y - c.y) < 0.01 and abs(ur - r) < 0.01
+               for _, uc, ur in unique_holes):
+            continue
+        unique_holes.append((idx, c, r))
+
+    for n, (idx, c, r) in enumerate(unique_holes):
+        try:
+            dia = doc.addObject("TechDraw::DrawViewDimension", "%s_Dia%d" % (view.Name, n))
+            page.addView(dia)
+            dia.Type = "Diameter"
+            set_dim_references(dia, view, [edge_name(idx)])
+            doc.recompute()
+        except Exception as e:
+            App.Console.PrintWarning("Kunne ikke sette diametermal pa %s: %s\n" % (view.Name, e))
+
+        # Posisjon fra origo (nedre venstre hjorne av delen)
+        add_distance_dim(doc, page, view, edge_name(xmin_idx), edge_name(idx), "DistanceX", "HullX%d" % n)
+        add_distance_dim(doc, page, view, edge_name(ymin_idx), edge_name(idx), "DistanceY", "HullY%d" % n)
+
+
+def add_label(doc, page, view, g):
+    ann = doc.addObject("TechDraw::DrawViewAnnotation", "Detalj_Tekst_%d" % g["item_no"])
+    page.addView(ann)
+    rep = g["rep"]
+    mat = get_material(rep["source"]) or "-"
+    ann.Text = [
+        "Pos %d - %s" % (g["item_no"], rep["source"].Label),
+        "Antall: %d   Material: %s" % (len(g["instances"]), mat),
+        "Tykkelse: %s mm" % round(g["T"], ROUND_DECIMALS),
+    ]
+    try:
+        ann.X = view.X - 30
+        ann.Y = view.Y + 25
+    except Exception:
+        pass
+
+
+def add_detail_page(doc, groups, template):
+    page = make_page(doc, "Page2_Detaljer", template)
+    n = len(groups)
+    if n == 0:
+        return page
+
+    cols = int(math.ceil(math.sqrt(n)))
+    rows = int(math.ceil(float(n) / cols))
+    page_w, page_h = get_page_size_mm(page)
+    cell_w = (page_w - 2 * DETAIL_MARGIN_MM) / cols
+    cell_h = (page_h - 2 * DETAIL_MARGIN_MM) / rows
+
+    for i, g in enumerate(groups):
+        r = i // cols
+        c = i % cols
+        cx = DETAIL_MARGIN_MM + cell_w * c + cell_w / 2.0
+        cy = page_h - (DETAIL_MARGIN_MM + cell_h * r + cell_h / 2.0)
+
+        rep = g["rep"]
+        view = doc.addObject("TechDraw::DrawViewPart", "Detalj_%d" % g["item_no"])
+        page.addView(view)
+        view.Source = [rep["source"]]
+        # Sett ovenfra: hull boret vertikalt i flate deler vises da som sirkler.
+        view.Direction = App.Vector(0, 0, 1)
+        view.XDirection = App.Vector(1, 0, 0)
+        set_hidden_lines(view)
+        doc.recompute()
+
+        bb = rep["shape"].BoundBox
+        proj_w = max(bb.XLength, 1.0)
+        proj_h = max(bb.YLength, 1.0)
+        avail_w = max(cell_w - 2 * INNER_PADDING_MM, 10.0)
+        avail_h = max(cell_h - 2 * INNER_PADDING_MM - TEXT_BLOCK_HEIGHT_MM, 10.0)
+        scale = min(avail_w / proj_w, avail_h / proj_h)
+        scale = max(min(scale, 5.0), 0.02)
+        if hasattr(view, "ScaleType"):
+            view.ScaleType = "Custom"
+        view.Scale = round(scale, 3)
+        view.X = cx
+        view.Y = cy - TEXT_BLOCK_HEIGHT_MM / 2.0
+        doc.recompute()
+
+        add_label(doc, page, view, g)
+        dimension_part_view(doc, page, view, g)
+
+    doc.recompute()
+    return page
+
+
+def main():
+    doc = App.ActiveDocument
+    if doc is None:
+        App.Console.PrintError("Ingen aktivt dokument. Apne sammenstillingen forst.\n")
+        return
+
+    App.Console.PrintMessage("Nortrapp TechDraw: starter...\n")
+    cleanup_previous(doc)
+
+    root = get_assembly_root()
+    instances = collect_part_instances(root)
+    if not instances:
+        App.Console.PrintError("Fant ingen deler med geometri i sammenstillingen.\n")
+        return
+
+    groups = group_unique_parts(instances)
+    App.Console.PrintMessage("Fant %d detaljer totalt, %d unike.\n" % (len(instances), len(groups)))
+
+    sheet = build_spreadsheet(doc, groups)
+
+    template = find_template()
+    if not template:
+        App.Console.PrintWarning(
+            "Fant ingen A4-landskap-mal automatisk. Sett mal manuelt pa sidene "
+            "(TechDraw -> Sideegenskaper -> Mal).\n"
+        )
+
+    overview_source = get_overview_source(root, instances)
+    add_overview_page(doc, overview_source, template, sheet, groups)
+    add_detail_page(doc, groups, template)
+
+    doc.recompute()
+    App.Console.PrintMessage(
+        "Ferdig. Se 'Page1_Oversikt' og 'Page2_Detaljer' i modelltreet. "
+        "Sjekk rapportvisningen over for eventuelle advarsler om enkeltmal.\n"
+    )
+
+
+main()
