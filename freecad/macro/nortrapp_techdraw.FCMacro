@@ -296,24 +296,102 @@ def get_overview_source(root, instances):
     return [inst["instance"] for inst in instances]
 
 
-def add_bom_table(doc, page, sheet, n_rows):
+BOM_TABLE_TYPES = ("TechDraw::DrawViewTable", "TechDraw::TableView", "TechDraw::DrawViewBOM")
+
+
+def add_bom_table(doc, page, sheet, groups):
+    """Prover flere kjente TechDraw-tabelltyper (varierer mellom
+    FreeCAD-versjoner - eldre versjoner har ingen). Faller tilbake til
+    en ren tekstblokk (DrawViewAnnotation) hvis ingen finnes."""
+    n_rows = len(groups)
+    table = None
+    last_err = None
+    for type_name in BOM_TABLE_TYPES:
+        try:
+            table = doc.addObject(type_name, "Kappliste")
+            break
+        except Exception as e:
+            last_err = e
+            table = None
+
+    if table is not None:
+        try:
+            page.addView(table)
+            table.Source = sheet
+            table.CellStart = "A1"
+            table.CellEnd = "G%d" % (n_rows + 1)
+            if hasattr(table, "HasHeader"):
+                table.HasHeader = True
+            table.X = 40
+            table.Y = 30
+            doc.recompute()
+            return
+        except Exception as e:
+            last_err = e
+            try:
+                doc.removeObject(table.Name)
+            except Exception:
+                pass
+
+    App.Console.PrintWarning(
+        "Fant ingen stottet TechDraw-tabelltype i denne FreeCAD-versjonen (%s). "
+        "Lager BOM som tekstblokk i stedet - tallene stemmer fortsatt, "
+        "bare uten ekte tabellinjer.\n" % last_err
+    )
+    add_bom_text_fallback(doc, page, groups)
+
+
+def add_bom_text_fallback(doc, page, groups):
+    ann = doc.addObject("TechDraw::DrawViewAnnotation", "Kappliste_Tekst")
+    page.addView(ann)
+    lines = ["%-4s %-22s %-6s %-12s %8s %8s %8s" %
+              ("Pos", "Betegnelse", "Antall", "Material", "L(mm)", "B(mm)", "T(mm)")]
+    for g in groups:
+        rep = g["rep"]
+        lines.append("%-4d %-22s %-6d %-12s %8s %8s %8s" % (
+            g["item_no"], rep["source"].Label[:22], len(g["instances"]),
+            (get_material(rep["source"]) or "-")[:12],
+            round(g["L"], ROUND_DECIMALS), round(g["W"], ROUND_DECIMALS), round(g["T"], ROUND_DECIMALS)
+        ))
+    ann.Text = lines
+    if hasattr(ann, "Font"):
+        try:
+            ann.Font = "DejaVu Sans Mono"
+        except Exception:
+            pass
     try:
-        table = doc.addObject("TechDraw::DrawViewTable", "Kappliste")
-        page.addView(table)
-        table.Source = sheet
-        table.CellStart = "A1"
-        table.CellEnd = "G%d" % (n_rows + 1)
-        if hasattr(table, "HasHeader"):
-            table.HasHeader = True
-        table.X = 40
-        table.Y = 30
-        doc.recompute()
-    except Exception as e:
-        App.Console.PrintWarning(
-            "Klarte ikke opprette BOM-tabell automatisk (%s).\n"
-            "Losning: I TechDraw, velg siden og bruk "
-            "'Sett inn -> Tabellvisning', pek pa regnearket '%s'.\n" % (e, sheet.Name)
-        )
+        ann.X = 40
+        ann.Y = 40
+    except Exception:
+        pass
+
+
+def add_isometric_fallback(doc, page, source_objs):
+    """DrawProjGroup.addProjection("Isometric") feiler pa noen
+    FreeCAD-versjoner (typen finnes ikke i den lokale projeksjonsgruppe-
+    enumen). Lager da en fristaende isometrisk DrawViewPart i stedet."""
+    view = doc.addObject("TechDraw::DrawViewPart", "AssemblyViews_Iso")
+    page.addView(view)
+    view.Source = source_objs
+    d = App.Vector(1, -1, 1)
+    d.normalize()
+    view.Direction = d
+    try:
+        view.XDirection = App.Vector(1, 1, 0).normalize()
+    except Exception:
+        pass
+    if hasattr(view, "ScaleType"):
+        view.ScaleType = "Automatic"
+    set_hidden_lines(view)
+    page_w, page_h = get_page_size_mm(page)
+    view.X = page_w * 0.78
+    view.Y = page_h * 0.72
+    App.Console.PrintWarning(
+        "Isometrisk visning kunne ikke legges til i projeksjonsgruppen automatisk "
+        "(stottes ikke i denne FreeCAD-versjonen) - laget som egen visning i stedet. "
+        "Du ma sannsynligvis flytte/skalere den manuelt sa den ikke overlapper de andre.\n"
+    )
+    return view
 
 
 def add_overview_page(doc, source_objs, template, sheet, groups):
@@ -326,18 +404,34 @@ def add_overview_page(doc, source_objs, template, sheet, groups):
     set_first_angle(proj)
     doc.recompute()
 
-    for direction in ("Front", "Top", "Right", "Isometric"):
+    for direction in ("Front", "Top", "Right"):
         try:
             proj.addProjection(direction)
         except Exception as e:
             App.Console.PrintWarning("Kunne ikke legge til %s-visning: %s\n" % (direction, e))
     doc.recompute()
 
+    iso_added = False
+    for iso_name in ("Isometric", "Iso", "Axonometric"):
+        try:
+            proj.addProjection(iso_name)
+            iso_added = True
+            break
+        except Exception:
+            continue
+    doc.recompute()
+    if not iso_added:
+        try:
+            add_isometric_fallback(doc, page, source_objs)
+        except Exception as e:
+            App.Console.PrintWarning("Kunne ikke lage isometrisk visning i det hele tatt: %s\n" % e)
+    doc.recompute()
+
     for item in getattr(proj, "Views", []):
         set_hidden_lines(item)
     doc.recompute()
 
-    add_bom_table(doc, page, sheet, len(groups))
+    add_bom_table(doc, page, sheet, groups)
     return page
 
 
@@ -390,11 +484,41 @@ def get_view_edges(view):
 
 
 def dimension_part_view(doc, page, view, g):
+    # Tving en ekstra, "sikker" recompute av selve visningen - noen
+    # FreeCAD-versjoner/tilfeller trenger dette for a faktisk kjore
+    # HLR-projeksjonen (kant-beregningen) for getEdgeByIndex gir noe.
+    try:
+        view.touch()
+    except Exception:
+        pass
     doc.recompute()
     edges = get_view_edges(view)
+
     if not edges:
-        App.Console.PrintWarning("Ingen kanter funnet for %s, hopper over malsetting.\n" % view.Name)
+        src_shape = None
+        try:
+            src_shape = g["rep"]["shape"]
+        except Exception:
+            pass
+        shape_info = "ukjent"
+        if src_shape is not None:
+            try:
+                shape_info = "tom shape" if src_shape.isNull() else ("solid, volum=%.1f mm3" % src_shape.Volume)
+            except Exception:
+                shape_info = "kunne ikke sjekke shape"
+        touched = "?"
+        try:
+            touched = str(view.isTouched())
+        except Exception:
+            pass
+        App.Console.PrintWarning(
+            "Ingen kanter funnet for %s (kildeform: %s, fortsatt 'touched' etter recompute: %s). "
+            "Hopper over malsetting for denne delen - se README for kjente arsaker "
+            "(f.eks. ustabil sammenstilling/joints som forstyrrer recompute).\n"
+            % (view.Name, shape_info, touched)
+        )
         return
+    App.Console.PrintMessage("%s: %d kanter funnet, forsoker a malsette.\n" % (view.Name, len(edges)))
 
     def edge_name(idx):
         return "Edge%d" % (idx + 1)

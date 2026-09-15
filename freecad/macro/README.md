@@ -87,6 +87,25 @@ TEXT_BLOCK_HEIGHT_MM = 16.0
 Juster disse ved behov (f.eks. startnummer på posisjoner, avrunding av mål,
 marger på rutenett-siden).
 
+## Feilsøking
+
+Hvis rapportvisningen viser `Ingen kanter funnet for Detalj_N` for alle
+detaljer, hjelper det å sjekke:
+
+- Prøv å kjøre makroen på et enklere/nyere lagret dokument (evt. en kopi der
+  du fjerner mistenkelige Joints), for å skille mellom en feil i makroen og
+  en feil i selve sammenstillingen.
+- Se om rapportvisningen viser `Solve failed: invalid vector subscript` eller
+  `hasher mismatch` **før** du i det hele tatt kjører makroen. Dette er kjente
+  ustabilitetsproblemer i FreeCAD sin (nyere) Assembly-arbeidsbenk, ikke noe
+  makroen forårsaker – men de kan gjøre at dokumentets recompute ikke
+  fullføres skikkelig for andre objekter (inkludert TechDraw-visningene).
+  Prøv å rydde opp i de aktuelle Joints (i loggen f.eks. `Joint027`–`Joint036`)
+  – slett og lag dem på nytt, eller sjekk om de er overflødige/motstridende.
+- Makroen tvinger nå en ekstra recompute av hver detaljvisning og skriver ut
+  om kilde-formen er tom, samt om visningen fortsatt er "touched" etter
+  recompute, for å gi bedre feilinfo i rapportvisningen.
+
 ## Videre forbedringer (ikke implementert)
 
 - Egen sidevisning per del for å målsette tykkelse direkte på tegningen
