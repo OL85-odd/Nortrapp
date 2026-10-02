@@ -1,6 +1,6 @@
 # NT-Arkivet – plan
 
-> Status: **Til godkjenning** · Versjon 0.1 · 02.10.2026 · Eier: OL
+> Status: **Til godkjenning** · Versjon 0.2 · 02.10.2026 · Eier: OL
 
 NT-Arkivet er Nortrapps interne system for prosesser, prosedyrer og opplæring.
 Det viser hele løpet fra «kunde tar kontakt» til ettermarked som et T-banekart,
@@ -119,8 +119,40 @@ vises de som «forlatt gren» i loggen. De slettes ikke.
   etasjehøyde.
 - Ingenting brukes uten at du har bekreftet det.
 
-Regelbiblioteket trenes på 3–5 ekte ordrebekreftelser fra Kalken. De sendes
-når planen er godkjent.
+### Funn fra eksempeldokumentene (H420-26, H430-26 / 056867, H433-26 / 055242)
+
+Et prosjekt består av fire dokumenttyper:
+
+| Dokument | Kilde | Form | Lesbarhet |
+|---|---|---|---|
+| **Ordrebekreftelse** | Kalken, skrevet ut i monospace | Skannet (iPhone) | OCR test: alle linjer vi trenger ble lest riktig. Bare beløp hadde småfeil, og dem trenger vi ikke |
+| **Måleskisse** | Selger eller måler, håndtegnet | Skannet | Håndskrift kan ikke leses sikkert. Skal vises ved siden av skjemaet for manuell inntasting |
+| **Produksjonsordre** (H-nr.) | Kalken, laget av konstruktør | Lesbar PDF | Fullt lesbar |
+| **Plan.view** | Staircon, skrevet ut med kontrollmerker | PDF / skann | Tittelfelt: Proj, Etasjehøyde, Bjelkelagstykkelse, Inntrinn, Opptrinn, Frihøyde |
+
+Nøkler i ordrebekreftelsen. Linjene starter med en **varegruppekode**:
+
+| Mønster | Felt |
+|---|---|
+| `Reg.nr.: 056867` | Kalkylenr. (= «Best.nr.» i produksjonsordren) |
+| `Lev.adr. …` | Kunde + leveringsadresse |
+| `RETT TRAPP I FURU` | Trappetype + treslag |
+| `LØP1: 885mm` | Trappebredde |
+| `16 opptrinn` | Antall opptrinn |
+| `gangretning Mellom vegger` / `HØYRE opp trappen` | Vangeoppsett **eller** ganglinje (samme felt i Kalken) |
+| `13 Håndløper …` / `21 Returgelender … 850 mm` | Gelender |
+| `37 TETT TRAPP/STUSSTRINN` vs. `åpen trapp m/barnesikringslist` | Stusstrinn eller barnesikring |
+| `41 … fargekoder: S 0500-N / 3409 Hvit` / `ubehandlet` | Overflate |
+| `01 Dekktrinn i papp` (vs. massiv papp) | Dekktrinn – kontroll e02 |
+| `90 Dekklist …` | Dekklister – valg p07d |
+| `Meglere type 11` / `Megler oppe …` | Tillegg megler |
+| `Leveringstid: Uke 35` | Leveringsuke |
+
+**Automatisk kryss-kontroll** (ny funksjon): når ordrebekreftelse, produksjonsordre og
+Plan.view er lastet inn, sammenligner appen dem. Den kontrollerer bredde (LØP1 mot
+Staircon), antall opptrinn, etasjehøyde (skisse mot Staircon), varelinjer
+(ordrebekreftelse mot produksjonsordre), overflate og EL-antall.
+Avvik vises som røde punkter på T-banekartet.
 
 ## 7. Design
 
@@ -187,9 +219,6 @@ nye kalkulasjonsappen (vurderes når den finnes). Brukere velger initialer ved o
 
 ## 11. Åpne punkter
 
-1. **Delt data og QR på mobil.** En fil på fellesdisken fungerer for PC-ene, men
-   en telefon som skanner en QR-kode trenger en adresse den kan nå. Valg:
-   - a) Liten lokal webserver på nettverket (PC, NAS eller Raspberry Pi) – anbefalt
-   - b) Bare PC-er i første omgang, og QR kommer når SharePoint er på plass
-2. **Eksempeldokumenter:** 3–5 ordrebekreftelser og plantegninger, gjerne med
-   ulike trappetyper og én skannet.
+1. **Server:** ✅ Avklart. Nortrapp har en server i bygget som alle når. Vi utvikler
+   og tester lokalt først, og flytter dit når appen er klar.
+2. **Flere eksempler:** svingtrapp, repo, glass, venstre opp og gelender mangler.
