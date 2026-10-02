@@ -24,7 +24,7 @@ Gå gjennom dem og si fra hva som skal beholdes, endres eller fjernes.
 | e07 | **Nytt forslag:** «Test trappen mot norm» (Shift + F12). Slett hvis dere ikke bruker den. |
 | s03 | Alt + F9 lagrer hjørnemål til Egenskaper trapp. |
 | v00 | F8 / F9 sletter vangeendringer. |
-| v01 | Alt + ← / → viser venstre / høyre vange. **Alt + C står ikke i hjelpefilen**, kontroller. |
+| v01 | Alt + ← / → viser venstre / høyre vange. Alt + C = flytt vertex i alle akser (bekreftet av OL). |
 | pr01 | Tips: «Lagre som forvalg» / «Les inn forvalg» i F12-dialogen. |
 | pr01b / pr04 | Shift + F8 (produksjonsvisning), Shift + F5 (grunnriss). |
 | pr07b | Forklaring på «Kjør»-kolonnen (CNC-etterbehandling). |
@@ -39,6 +39,11 @@ Gå gjennom dem og si fra hva som skal beholdes, endres eller fjernes.
 | pr05 | Spiler-utskrift vises bare når trappen har spiler. |
 | pr06 | Skrivefeil «S05100-N» → «S0500-N». |
 
-## Ikke verifisert (trenger deg)
-- **Ctrl + L / Ctrl + D** for utskrift står ikke i hjelpefilen. Er de riktige i norsk versjon?
-- **Alt + C** (flytt i begge akser), se over.
+## Avklart
+- **Alt + C** = flytt vertex i alle akser (OL). Alt + X / Alt + Y = bare X / Y.
+- **Ctrl + L / Ctrl + D** finnes. Arkiv-menyen i norsk Staircon viser «Skriv ut produksjonsliste… Ctrl+L»
+  og «Skriv ut produksjonstegninger… Ctrl+D» (skjermbilde pr2).
+
+## Må kontrolleres
+- **Ctrl + F**: hjelpefilen sier «Egenskaper etasje», men Arkiv-menyen i norsk Staircon viser
+  «Skriv ut på plotter… Ctrl+F». Trykk Ctrl + F i Staircon og se hvilken dialog som åpnes.

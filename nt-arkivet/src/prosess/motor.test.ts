@@ -112,4 +112,8 @@ describe('innholdet er gyldig', () => {
   it('alle hurtigtaster er forklart', () => {
     for (const s of alle) for (const t of s.hurtigtaster ?? []) expect(HURTIGTASTER, `${s.id}: ${t}`).toHaveProperty([t]);
   });
+
+  it('bare Ctrl + F gjenstår å kontrollere', () => {
+    expect(Object.values(HURTIGTASTER).filter((h) => h.kontroller).map((h) => h.tast)).toEqual(['Ctrl + F']);
+  });
 });

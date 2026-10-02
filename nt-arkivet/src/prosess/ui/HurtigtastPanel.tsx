@@ -39,7 +39,7 @@ export function HurtigtastPanel({ steg }: { steg: Steg | null }) {
                   <Taster tast={t} />
                   <span>
                     {h.tekst}
-                    {h.egen && <em class="ht-egen"> · ikke i hjelpefilen</em>}
+                    {h.kontroller && <em class="ht-egen" title={h.kontroller}> · må kontrolleres: {h.kontroller}</em>}
                   </span>
                 </li>
               );

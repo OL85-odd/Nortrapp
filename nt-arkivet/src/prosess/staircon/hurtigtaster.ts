@@ -1,12 +1,13 @@
 /* Staircon-hurtigtaster med norsk forklaring.
    Kilde: «Tilgjengelige hurtigtaster» i staircon.chm (oversatt), pluss
-   Nortrapps egne der hjelpefilen ikke har dem (merket `egen`). */
+   Nortrapps egne, bekreftet i norsk Staircon (Arkiv-menyen) eller av OL.
+   `kontroller` = kildene er uenige, må testes i Staircon. */
 
 export interface Hurtigtast {
   tast: string;
   tekst: string;
-  /** Står ikke i hjelpefilen — brukt i Nortrapp, bør verifiseres. */
-  egen?: boolean;
+  /** Kildene er uenige eller tasten er ukjent — må kontrolleres i Staircon. */
+  kontroller?: string;
 }
 
 export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
@@ -32,7 +33,7 @@ export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
       ['Alt + Y', 'Flytt punkt bare i Y-retning (sideriss)'],
       ['Alt + Z', 'Flytt trinnpunkt, behold senter (arbeidsvy)'],
       ['Ctrl + E', 'Markere punkter'],
-      ['Ctrl + F', 'Egenskaper etasje (høyde og bjelkelagstykkelse)'],
+
       ['Ctrl + N', 'Nytt prosjekt'],
       ['Ctrl + O', 'Åpne prosjekt'],
       ['Ctrl + S', 'Lagre prosjektet'],
@@ -53,9 +54,17 @@ export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
   )
     .map(([tast, tekst]): [string, Hurtigtast] => [tast, { tast, tekst }])
     .concat([
-      ['Alt + C', { tast: 'Alt + C', tekst: 'Flytt punkt i begge akser (Nortrapp-praksis)', egen: true }],
-      ['Ctrl + L', { tast: 'Ctrl + L', tekst: 'Skriv ut produksjonsliste', egen: true }],
-      ['Ctrl + D', { tast: 'Ctrl + D', tekst: 'Skriv ut produksjonstegninger', egen: true }],
+      ['Alt + C', { tast: 'Alt + C', tekst: 'Flytt punkt (vertex) fritt i alle akser (sideriss)' }],
+      ['Ctrl + L', { tast: 'Ctrl + L', tekst: 'Skriv ut produksjonsliste (Arkiv-menyen)' }],
+      ['Ctrl + D', { tast: 'Ctrl + D', tekst: 'Skriv ut produksjonstegninger (Arkiv-menyen)' }],
+      [
+        'Ctrl + F',
+        {
+          tast: 'Ctrl + F',
+          tekst: 'Egenskaper etasje (høyde og bjelkelagstykkelse)',
+          kontroller: 'Arkiv-menyen viser Ctrl + F = «Skriv ut på plotter». Hjelpefilen sier Egenskaper etasje.',
+        },
+      ],
       ['Ctrl + Shift + D', { tast: 'Ctrl + Shift + D', tekst: 'Hoveddatabasen' }],
     ]),
 );
@@ -64,5 +73,5 @@ export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
 export const ALLTID = ['Shift + F5', 'Shift + F6', 'Shift + F7', 'Shift + F8', 'Ctrl + S', 'F1'];
 
 export function beskriv(tast: string): Hurtigtast {
-  return HURTIGTASTER[tast] ?? { tast, tekst: '', egen: true };
+  return HURTIGTASTER[tast] ?? { tast, tekst: '', kontroller: 'Ukjent tast' };
 }

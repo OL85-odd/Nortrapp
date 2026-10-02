@@ -372,7 +372,10 @@ export const STAIRCON: Prosess = {
             kilde: 'Egenskaper etasje',
             tekst: 'Høyde: fra ferdig gulv til neste etasjes ferdige gulv. Bjelkelagstykkelse: tykkelsen på bjelkelaget. Gulvtykkelse brukes hvis trappen monteres før ferdig gulv. Innskrevne verdier står ferdig utfylt når neste prosjekt opprettes.',
           },
-          merknad: { type: 'endret', tekst: 'Gjaldt før bare kopierte prosjekter. Hjelpefilen viser at verdiene alltid hentes fra forrige prosjekt.' },
+          merknad: {
+            type: 'endret',
+            tekst: 'Gjaldt før bare kopierte prosjekter. Hjelpefilen viser at verdiene alltid hentes fra forrige prosjekt. OBS: Arkiv-menyen viser Ctrl + F = «Skriv ut på plotter» — test hvilken dialog Ctrl + F åpner.',
+          },
         },
       ],
     },
@@ -638,9 +641,9 @@ export const STAIRCON: Prosess = {
           tittel: 'Rett inn de synlige vangene',
           gjelder: { steg: 'vange', er: ['en_synlig', 'to_synlige'] },
           hurtigtaster: ['Ctrl + E', 'Alt + ←', 'Alt + →', 'Alt + X', 'Alt + Y', 'Alt + C'],
-          tekst: 'De med gelender. Juster høyden på vangene i sideriss. Alt + ← / → viser venstre / høyre vange. Ctrl + E = markere punkter. Når du drar et punkt: Alt + X = kun X, Alt + Y = kun Y.',
+          tekst: 'De med gelender. Juster høyden på vangene i sideriss. Alt + ← / → viser venstre / høyre vange. Ctrl + E = markere punkter. Når du drar et punkt: Alt + C = fritt i alle akser, Alt + X = kun X, Alt + Y = kun Y.',
           bilder: [{ fil: 'sving-justering-av-vanger.webp', tekst: 'Justering av vanger i sideriss' }],
-          merknad: { type: 'endret', tekst: 'Vises bare når det er synlige vanger. La til Alt + ← / →. Alt + C står ikke i hjelpefilen — kontroller.' },
+          merknad: { type: 'endret', tekst: 'Vises bare når det er synlige vanger. La til Alt + ← / → fra hjelpefilen.' },
         },
         {
           id: 'v02',
