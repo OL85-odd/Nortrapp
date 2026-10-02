@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { TopBar } from './ui/TopBar';
 import { BrukerVelger } from './ui/BrukerVelger';
 import { bruker } from './ui/settings';
+import { db } from './data/store';
 import { Oversikt } from './views/Oversikt';
 
 /* Adressen i nettleseren styrer hva som vises, så en QR-kode eller lenke
@@ -14,7 +15,13 @@ function lesRute(): string | null {
 
 export function App() {
   const [valgt, setValgt] = useState<string | null>(lesRute());
-  const [visVelger, setVisVelger] = useState(!bruker.value);
+  const [visVelger, setVisVelger] = useState(() => {
+    // Eldre versjoner lagret initialer i stedet for id — oversett, og be om valg
+    // på nytt hvis brukeren er slettet eller arkivert.
+    const b = db.value.brukere.find((x) => x.id === bruker.value || x.initialer === bruker.value);
+    bruker.value = b && !b.arkivert ? b.id : null;
+    return !bruker.value;
+  });
 
   useEffect(() => {
     const vedEndring = () => setValgt(lesRute());

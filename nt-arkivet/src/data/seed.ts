@@ -4,12 +4,12 @@ import type { Database } from './types';
    Senere endres dette i redigeringsmodus — ikke her. */
 
 export const SEED: Database = {
-  skjema: 1,
+  skjema: 2,
   oppdatert: '2026-10-02',
   brukere: [
-    { initialer: 'OL', navn: 'Odd' },
-    { initialer: 'RA', navn: 'Roger' },
-    { initialer: 'SA', navn: 'Simen' },
+    { id: 'b-ol', initialer: 'OL', navn: 'Odd' },
+    { id: 'b-ra', initialer: 'RA', navn: 'Roger' },
+    { id: 'b-sa', initialer: 'SA', navn: 'Simen' },
   ],
   linjer: [
     {

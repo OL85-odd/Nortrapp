@@ -23,6 +23,7 @@ function skriv(nokkel: string, verdi: string | null) {
 }
 
 export const tema = signal<Tema>((les('nt-tema') as Tema) || 'auto');
+/** Id-en til brukeren som sitter ved maskinen (ikke initialene). */
 export const bruker = signal<string | null>(les('nt-bruker'));
 
 effect(() => {

@@ -38,9 +38,31 @@ const lager: Lager = nettleserLager;
 
 export const db = signal<Database>(SEED);
 
+/* Oppgraderer data lagret med en eldre versjon av appen, så ingenting går tapt. */
+function migrer(d: Database): Database {
+  if (d.skjema < 2) {
+    // v2: brukere får fast id, slik at initialer kan endres senere.
+    d = {
+      ...d,
+      skjema: 2,
+      brukere: d.brukere.map((b) => ({ ...b, id: b.id ?? 'b-' + b.initialer.toLowerCase() })),
+    };
+  }
+  return d;
+}
+
 export async function lastInn() {
   const lagret = await lager.hent();
-  if (lagret && lagret.skjema === SEED.skjema) db.value = lagret;
+  if (!lagret) return;
+  if (lagret.skjema > SEED.skjema) {
+    console.warn('Data er laget med en nyere versjon av NT-Arkivet. Bruker startinnhold.');
+    return;
+  }
+  db.value = migrer(lagret);
+}
+
+export function nyId(prefiks: string) {
+  return `${prefiks}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export async function oppdater(endre: (d: Database) => Database) {

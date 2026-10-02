@@ -29,8 +29,12 @@ export interface Linje {
 }
 
 export interface Bruker {
+  /** Fast ID som aldri endres — logger og kontroller peker hit. */
+  id: string;
   initialer: string;
   navn: string;
+  /** Arkiverte brukere vises ikke i velgeren, men beholdes i historikken. */
+  arkivert?: boolean;
 }
 
 export interface Database {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { bruker, erMork, tema, type Tema } from './settings';
+import { db } from '../data/store';
 import logoHvit from '../assets/logo-hvit.png';
 import logoFarge from '../assets/logo-farge.png';
 import './topbar.css';
@@ -35,6 +36,7 @@ export function TopBar({ onByttBruker }: { onByttBruker: () => void }) {
   const na = useKlokke();
   const mork = useMorkModus();
   const tid = na.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+  const meg = db.value.brukere.find((b) => b.id === bruker.value);
   const dato = na.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
@@ -57,8 +59,8 @@ export function TopBar({ onByttBruker }: { onByttBruker: () => void }) {
             </button>
           ))}
         </div>
-        <button class="bruker-knapp dot" onClick={onByttBruker} title="Bytt bruker">
-          {bruker.value ?? '--'}
+        <button class="bruker-knapp dot" onClick={onByttBruker} title={meg ? `${meg.navn} – bytt bruker` : 'Velg bruker'}>
+          {meg?.initialer ?? '--'}
         </button>
       </div>
     </header>
