@@ -1,6 +1,6 @@
 # NT-Arkivet – plan
 
-> Status: **Til godkjenning** · Versjon 0.2 · 02.10.2026 · Eier: OL
+> Status: **Godkjent – under bygging** · Versjon 0.3 · 02.10.2026 · Eier: OL
 
 NT-Arkivet er Nortrapps interne system for prosesser, prosedyrer og opplæring.
 Det viser hele løpet fra «kunde tar kontakt» til ettermarked som et T-banekart,
@@ -148,11 +148,50 @@ Nøkler i ordrebekreftelsen. Linjene starter med en **varegruppekode**:
 | `Meglere type 11` / `Megler oppe …` | Tillegg megler |
 | `Leveringstid: Uke 35` | Leveringsuke |
 
-**Automatisk kryss-kontroll** (ny funksjon): når ordrebekreftelse, produksjonsordre og
+Funn fra de neste fem produksjonsordrene (H449, H454, H468, H469, H483):
+
+- **Planview er limt inn** i nyere produksjonsordrer, og tittelfeltet fra Staircon kan
+  leses som tekst (Etasjehøyde, Bjelkelagstykkelse, Inntrinn, Opptrinn, Frihøyde,
+  meglerliste). Én PDF kan altså gi både produksjonsordre og Staircon-verdier.
+- **Varegruppekodene er ikke konsekvente.** For eksempel kan `TETT TRAPP/STUSSTRINN`
+  ha både kode 37 og kode 01, og `Malt` både 41 og 04. Reglene matcher derfor på tekst
+  først, og koden brukes bare som hint.
+- **Trappetypen står ikke i produksjonsordren**, bare i ordrebekreftelsen
+  («1 stk. RETT TRAPP …»). Mangler den, blir brukeren spurt.
+- **Nye nøkler:**
+  - `REPO PÅ BYGG` → repo i bygg (tegnes, men leveres ikke)
+  - `28 Spilevegg … fra vange til tak` → tillegg spiler
+  - `Synlig veggvange m/TV-ramme – løp 2` / `Synlig VV2` → TV-ramme + synlig vange
+  - `Returgelender … 1800 mm`, `runde sprosser/balustre 23mm TYPE 1` og
+    `håndløper 40x67mm TYPE C` → gelenderets type, sprosser og lengde
+  - `Meglere type 11` / `Megler oppe på løp 1 …` → megler
+  - `- 2 stk. EL` / `- 0 el` → antall endelister
+  - `TRESLAG: I FURU KOMPLETT` → treslag
+  - `Ikke avklart` i fargekode → **rødt varsel**, fordi overflaten må avklares før produksjon
+- **Idealformelen kan regnes ut automatisk:** 2 × opptrinn + inntrinn fra Staircon-feltet
+  skal ligge mellom 600 og 640.
+  Kontrollert på eksemplene: H430 = 624,6 · H468 = 607,5 · H483 = 635,5.
+
+### Bekreftelse – regler for innlesing
+
+1. Hvert felt får status **Funnet** (grønn), **Usikker** (gul) eller **Mangler** (rød).
+2. Ved usikre eller manglende felt spør appen konkret. Eksempel: «Ganglinjen står ikke
+   på ordrebekreftelsen. Se pilen på skissen: høyre eller venstre opp?» Skissen vises
+   ved siden av.
+3. **Alle felt må bekreftes** før brukeren kommer videre. Det gjelder også dem som ble
+   funnet sikkert.
+4. Det loggføres hvem som bekreftet, og når.
+
+Kundedokumenter legges **ikke** i Git. Testsettet holdes lokalt, eller anonymiseres
+før det legges inn i repoet.
+
+**Automatisk kryss-kontroll**: når ordrebekreftelse, produksjonsordre og
 Plan.view er lastet inn, sammenligner appen dem. Den kontrollerer bredde (LØP1 mot
 Staircon), antall opptrinn, etasjehøyde (skisse mot Staircon), varelinjer
 (ordrebekreftelse mot produksjonsordre), overflate og EL-antall.
 Avvik vises som røde punkter på T-banekartet.
+Hver kontroll må **bekreftes manuelt** («Jeg har sjekket tallene»), også når alt
+stemmer. Avvik krever en kommentar før de kan godkjennes.
 
 ## 7. Design
 
