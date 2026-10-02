@@ -1,8 +1,15 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
+import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// base: './' gjør at bygget fungerer fra hvilken som helst mappe på serveren.
-export default defineConfig({
+// `npm run build`     → mappe (dist/) for serveren.
+// `npm run build:fil` → én HTML-fil (dist-fil/) som kan åpnes med dobbeltklikk,
+//                       uten installasjon. Fonter og bilder bakes inn i filen.
+export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [preact()],
-});
+  plugins: mode === 'fil' ? [preact(), viteSingleFile()] : [preact()],
+  build:
+    mode === 'fil'
+      ? { outDir: 'dist-fil', assetsInlineLimit: Number.MAX_SAFE_INTEGER }
+      : { outDir: 'dist' },
+}));

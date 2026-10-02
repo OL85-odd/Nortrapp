@@ -11,7 +11,11 @@ npm install
 npm run dev        # utvikling med automatisk oppdatering, http://localhost:5173
 npm run build      # typekontroll + ferdig bygg i dist/
 npm run preview    # test det ferdige bygget lokalt
+npm run build:fil  # én HTML-fil i dist-fil/ som kan åpnes med dobbeltklikk
 ```
+
+`dist-fil/index.html` er hele appen i én fil (fonter og logo bakt inn). Den
+kan sendes på e-post eller legges på en minnepinne og åpnes uten installasjon.
 
 Innholdet i `dist/` er en statisk nettside som kan legges på serveren i
 bygget. Den trenger ikke internett, og fontene er inkludert.
