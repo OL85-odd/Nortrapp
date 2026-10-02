@@ -1,0 +1,81 @@
+.velger-bakgrunn {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.velger {
+  width: min(460px, 100%);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.velger-tittel {
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.velger-tekst {
+  margin: 0 0 8px;
+  color: var(--text-soft);
+}
+
+.velger-liste {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.velger-bruker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+}
+
+.velger-bruker .dot {
+  font-size: 26px;
+}
+
+.velger-bruker[aria-pressed='true'],
+.velger-bruker:hover {
+  border-color: var(--accent);
+}
+
+.velger-navn {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.velger-ny {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.velger-ny input {
+  min-width: 0;
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.velger-ny input:first-child {
+  flex: 0 0 64px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  text-align: center;
+}
