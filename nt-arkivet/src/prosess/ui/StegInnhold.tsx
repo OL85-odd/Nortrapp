@@ -1,15 +1,19 @@
 import { useState } from 'preact/hooks';
 import type { Prosjekt, Steg } from '../types';
 import { bildeUrl } from '../bilder';
+import { BildeVisning } from './BildeVisning';
+import { hentPost, sisteVersjon } from '../arkiv';
 import { settFelt, settNotat, svar } from '../prosjekter';
 import { useFeltVerdi } from '../../ui/hooks';
 import { Taster } from './HurtigtastPanel';
 import { Lightbox } from './Lightbox';
 
 /* Innholdet i ett steg. Brukes stort i opplæring og kompakt (utfelt rad)
-   i produksjon. Valg, felter og notat lagres med en gang. */
+   i produksjon. Valg, felter og notat lagres med en gang.
+   Uten prosjekt (les-visning og forhåndsvisning i redigering) vises innholdet
+   uten noe som kan fylles ut. */
 
-export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt: Prosjekt; kompakt?: boolean }) {
+export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt?: Prosjekt; kompakt?: boolean }) {
   const [stortBilde, setStortBilde] = useState<number | null>(null);
   const bilder = steg.bilder ?? [];
 
@@ -30,11 +34,31 @@ export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt:
         </div>
       )}
 
-      {steg.valg && <ValgKontroll steg={steg} prosjekt={prosjekt} />}
+      {steg.valg && prosjekt && <ValgKontroll steg={steg} prosjekt={prosjekt} />}
+      {steg.valg && !prosjekt && <ValgForhandsvisning steg={steg} />}
 
-      {steg.felter?.map((f) => (
-        <FeltKontroll key={f.nokkel} prosjektId={prosjekt.id} stegId={steg.id} nokkel={f.nokkel} etikett={f.etikett} plassholder={f.plassholder} verdi={prosjekt.felt[f.nokkel] ?? ''} />
-      ))}
+      {steg.felter?.map((f) =>
+        prosjekt ? (
+          <FeltKontroll
+            key={f.nokkel}
+            prosjektId={prosjekt.id}
+            stegId={steg.id}
+            nokkel={f.nokkel}
+            etikett={f.etikett + (f.enhet ? ` (${f.enhet})` : '')}
+            plassholder={f.plassholder}
+            tall={f.type === 'tall'}
+            verdi={prosjekt.felt[f.nokkel] ?? ''}
+          />
+        ) : (
+          <label key={f.nokkel} class="felt">
+            <span>
+              {f.etikett}
+              {f.enhet ? ` (${f.enhet})` : ''}
+            </span>
+            <input disabled placeholder={f.plassholder} />
+          </label>
+        ),
+      )}
 
       {steg.verdier && (
         <dl class="verdier">
@@ -60,13 +84,17 @@ export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt:
           {bilder.map((b, i) => (
             <figure key={b.fil}>
               <button class="bilde-knapp" onClick={() => setStortBilde(i)} aria-label={`Vis stort: ${b.tekst}`}>
-                <img src={bildeUrl(b.fil)} alt={b.tekst} loading="lazy" />
+                <BildeVisning fil={b.fil} alt={b.tekst} loading="lazy" />
               </button>
               <figcaption>{b.tekst}</figcaption>
             </figure>
           ))}
         </div>
       )}
+
+      {steg.video && <VideoKloss kilde={steg.video.kilde} tekst={steg.video.tekst} />}
+
+      {steg.lenke && <LenkeKloss prosessId={steg.lenke.prosessId} tekst={steg.lenke.tekst} />}
 
       {steg.hjelp && (
         <details class="hjelp" open={!kompakt}>
@@ -97,9 +125,65 @@ export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt:
         </a>
       )}
 
-      <NotatKontroll prosjektId={prosjekt.id} stegId={steg.id} verdi={prosjekt.notater?.[steg.id] ?? ''} />
+      {prosjekt && <NotatKontroll prosjektId={prosjekt.id} stegId={steg.id} verdi={prosjekt.notater?.[steg.id] ?? ''} />}
 
       {stortBilde !== null && <Lightbox bilder={bilder} start={stortBilde} onLukk={() => setStortBilde(null)} />}
+    </div>
+  );
+}
+
+/* ── Video og lenke ────────────────────────────────────────── */
+
+function VideoKloss({ kilde, tekst }: { kilde: string; tekst: string }) {
+  // Filer på serveren og vanlige videolenker spilles av direkte. YouTube o.l. åpnes som lenke.
+  const fil = /\.(mp4|webm|mov|m4v)$/i.test(kilde);
+  const src = kilde.startsWith('\\\\') ? 'file:' + kilde.replace(/\\/g, '/') : kilde;
+  return (
+    <figure class="video">
+      {fil ? <video controls preload="metadata" src={src} /> : null}
+      <figcaption>
+        🎬 {tekst || 'Video'}{' '}
+        <a href={src} target="_blank" rel="noopener">
+          Åpne video ↗
+        </a>
+      </figcaption>
+    </figure>
+  );
+}
+
+function LenkeKloss({ prosessId, tekst }: { prosessId: string; tekst?: string }) {
+  const post = hentPost(prosessId);
+  if (!post) return <p class="panel-hint">Lenket prosess finnes ikke lenger.</p>;
+  const p = sisteVersjon(post).prosess;
+  return (
+    <a class="lenke-kloss" href={p.kunLesing ? `#/les/${post.id}` : `#/p/${post.id}`}>
+      <span class="label">{post.nr}</span>
+      <strong>{tekst || `Følg: ${p.navn}`}</strong>
+      <span aria-hidden="true">→</span>
+    </a>
+  );
+}
+
+/** Viser valget uten å kunne svare (les-visning og forhåndsvisning). */
+function ValgForhandsvisning({ steg }: { steg: Steg }) {
+  const v = steg.valg!;
+  return (
+    <div class="valg">
+      <span class="label">{v.sporsmal}</span>
+      <div class="valg-knapper">
+        {v.type === 'janei'
+          ? [v.knapper?.ja ?? 'Ja', v.knapper?.nei ?? 'Nei'].map((t) => (
+              <span key={t} class="valg-knapp forhand">
+                {t}
+              </span>
+            ))
+          : v.alternativer.map((a) => (
+              <span key={a.id} class="valg-knapp forhand">
+                {v.type === 'flere' ? '☐ ' : ''}
+                {a.navn}
+              </span>
+            ))}
+      </div>
     </div>
   );
 }
@@ -171,15 +255,17 @@ interface FeltProps {
   nokkel: string;
   etikett: string;
   plassholder?: string;
+  tall?: boolean;
   verdi: string;
 }
 
-function FeltKontroll({ prosjektId, stegId, nokkel, etikett, plassholder, verdi }: FeltProps) {
+function FeltKontroll({ prosjektId, stegId, nokkel, etikett, plassholder, tall, verdi }: FeltProps) {
   const [tekst, setTekst] = useFeltVerdi(verdi);
   return (
     <label class="felt">
       <span>{etikett}</span>
       <input
+        inputMode={tall ? 'decimal' : undefined}
         value={tekst}
         placeholder={plassholder}
         onInput={(e) => setTekst((e.target as HTMLInputElement).value)}

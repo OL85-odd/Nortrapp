@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STAIRCON } from './staircon/staircon';
-import { HURTIGTASTER } from './staircon/hurtigtaster';
+
 import { aktivtSteg, flatSti, fremdrift, gjelder, nesteUgjorte, skjulteSteg, sti, svarTekst } from './motor';
 import type { Svar } from './types';
 import { readdirSync } from 'node:fs';
@@ -110,10 +110,11 @@ describe('innholdet er gyldig', () => {
   });
 
   it('alle hurtigtaster er forklart', () => {
-    for (const s of alle) for (const t of s.hurtigtaster ?? []) expect(HURTIGTASTER, `${s.id}: ${t}`).toHaveProperty([t]);
+    const kjente = new Set(STAIRCON.hurtigtaster!.map((h) => h.tast));
+    for (const s of alle) for (const t of s.hurtigtaster ?? []) expect(kjente, `${s.id}: ${t}`).toContain(t);
   });
 
   it('bare Ctrl + F gjenstår å kontrollere', () => {
-    expect(Object.values(HURTIGTASTER).filter((h) => h.kontroller).map((h) => h.tast)).toEqual(['Ctrl + F']);
+    expect(STAIRCON.hurtigtaster!.filter((h) => h.kontroller).map((h) => h.tast)).toEqual(['Ctrl + F']);
   });
 });

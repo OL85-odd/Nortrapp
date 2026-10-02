@@ -29,6 +29,7 @@ export const bruker = signal<string | null>(les('nt-bruker'));
 effect(() => {
   const t = tema.value;
   skriv('nt-tema', t);
+  if (typeof document === 'undefined') return; // tester uten nettleser
   const root = document.documentElement;
   if (t === 'auto') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', t === 'mork' ? 'dark' : 'light');
@@ -45,5 +46,5 @@ effect(() => skriv('nt-modus', modus.value));
 export function erMork(): boolean {
   if (tema.value === 'mork') return true;
   if (tema.value === 'lys') return false;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  return typeof window !== 'undefined' && (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
 }

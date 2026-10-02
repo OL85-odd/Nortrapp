@@ -1,4 +1,6 @@
 import type { Kort } from '../data/types';
+import { hentPost } from '../prosess/arkiv';
+import { forfall } from '../views/Arbeidsflate';
 import './samling.css';
 
 interface Props {
@@ -23,7 +25,7 @@ export function Samling({ kort, valgt, onVelg, rediger, onNy }: Props) {
             <span class="flis-prikk" aria-hidden="true" />
             <span class="flis-navn">{s.navn}</span>
             {s.beskrivelse && <span class="flis-tekst">{s.beskrivelse}</span>}
-            <span class="flis-status label">{s.status === 'aktiv' ? 'Aktiv' : 'Under arbeid'}</span>
+            <FlisStatus prosessId={s.prosessId} aktiv={s.status === 'aktiv'} />
           </button>
         </li>
       ))}
@@ -39,5 +41,17 @@ export function Samling({ kort, valgt, onVelg, rediger, onNy }: Props) {
       )}
       {!rediger && kort.stasjoner.length === 0 && <li class="samling-tom label">Tom samling</li>}
     </ul>
+  );
+}
+
+/** Status nederst på flisen: ID og forfall hvis det finnes en prosess, ellers aktiv/under arbeid. */
+function FlisStatus({ prosessId, aktiv }: { prosessId?: string; aktiv: boolean }) {
+  const post = prosessId ? hentPost(prosessId) : undefined;
+  const f = post ? forfall(post.id) : null;
+  return (
+    <span class="flis-status">
+      {post && <span class="label">{post.nr}</span>}
+      {f ? <span class={`chip ${f.forfalt ? 'fare' : 'aktiv'}`}>{f.tekst}</span> : !post && <span class="label">{aktiv ? 'Aktiv' : 'Under arbeid'}</span>}
+    </span>
   );
 }

@@ -1,17 +1,15 @@
 import { db, nyId, oppdater } from '../data/store';
 import { bruker } from '../ui/settings';
-import { STAIRCON } from './staircon/staircon';
 import { svarTekst } from './motor';
+import { nyesteVersjonsnr, prosessForProsjekt } from './arkiv';
 import type { LoggPost, Prosess, Prosjekt, ProsjektType, Svar } from './types';
 
 /* Prosjekter: opprette, svare, krysse av og logge.
    Alt som skjer i et prosjekt loggføres med tid og initialer. */
 
-/** Hvilke stasjoner har en prosess man kan kjøre prosjekter gjennom. */
-export const PROSESSER: Record<string, Prosess> = { staircon: STAIRCON };
-
-export function prosessFor(p: Pick<Prosjekt, 'prosessId'>): Prosess {
-  return PROSESSER[p.prosessId];
+/** Innholdet prosjektet er låst til (se arkiv.ts). */
+export function prosessFor(p: Pick<Prosjekt, 'prosessId' | 'prosessVersjon'>): Prosess {
+  return prosessForProsjekt(p);
 }
 
 function finnSteg(prosess: Prosess, id: string) {
@@ -34,12 +32,19 @@ export async function opprett(felt: { prosessId: string; type: ProsjektType; num
   const p: Prosjekt = {
     id: nyId('p'),
     ...felt,
+    prosessVersjon: nyesteVersjonsnr(felt.prosessId),
     opprettet: new Date().toISOString(),
     opprettetAv: bruker.value,
     svar: {},
     felt: felt.nummer && felt.type === 'prosjekt' ? { prosjektnr: felt.nummer } : {},
     utfort: {},
-    logg: [post('opprettet', felt.type === 'ovelse' ? 'Øvingsprosjekt opprettet' : `${felt.type === 'tilbud' ? 'Tilbud' : 'Prosjekt'} opprettet`)],
+    logg: [
+      post(
+        'opprettet',
+        { ovelse: 'Øvingsprosjekt opprettet', tilbud: 'Tilbud opprettet', prosjekt: 'Prosjekt opprettet', gjennomforing: 'Gjennomføring startet' }[felt.type] +
+          ` (prosessversjon ${nyesteVersjonsnr(felt.prosessId)})`,
+      ),
+    ],
   };
   await oppdater((d) => ({ ...d, prosjekter: [p, ...d.prosjekter] }));
   return p;
@@ -112,6 +117,15 @@ export function settTilbudsinfo(prosjektId: string, info: Prosjekt['tilbud']) {
   return endreProsjekt(prosjektId, (p) => ({ ...p, tilbud: { ...p.tilbud, ...info } }));
 }
 
+/** Flytter et aktivt prosjekt over på nyeste versjon av prosessen (bare når brukeren velger det). */
+export function oppgraderVersjon(prosjektId: string) {
+  return endreProsjekt(prosjektId, (p) => {
+    const ny = nyesteVersjonsnr(p.prosessId);
+    if (ny === p.prosessVersjon) return p;
+    return { ...p, prosessVersjon: ny, logg: [...p.logg, post('oppgradert', `Oppgradert fra prosessversjon ${p.prosessVersjon} til ${ny}`)] };
+  });
+}
+
 export function settFerdig(prosjektId: string, ferdig: boolean) {
   return endreProsjekt(prosjektId, (p) => ({ ...p, ferdig: ferdig ? new Date().toISOString() : undefined }));
 }
@@ -172,6 +186,7 @@ export function konverterGammelt(x: Gammel): Prosjekt {
   return {
     id: 'abc-' + x.id,
     prosessId: 'staircon',
+    prosessVersjon: 1,
     type: x._type,
     nummer: x.prosjektnr || x.nummer || x.navn || (x.kalkylenr ? 'Kalkyle ' + x.kalkylenr : 'Uten nummer'),
     kalkylenr: x.kalkylenr || undefined,

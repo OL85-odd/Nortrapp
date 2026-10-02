@@ -3,12 +3,7 @@
    Nortrapps egne, bekreftet i norsk Staircon (Arkiv-menyen) eller av OL.
    `kontroller` = kildene er uenige, må testes i Staircon. */
 
-export interface Hurtigtast {
-  tast: string;
-  tekst: string;
-  /** Kildene er uenige eller tasten er ukjent — må kontrolleres i Staircon. */
-  kontroller?: string;
-}
+import type { Hurtigtast } from '../types';
 
 export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
   (
@@ -72,6 +67,5 @@ export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
 /** Taster som er nyttige uansett steg. */
 export const ALLTID = ['Shift + F5', 'Shift + F6', 'Shift + F7', 'Shift + F8', 'Ctrl + S', 'F1'];
 
-export function beskriv(tast: string): Hurtigtast {
-  return HURTIGTASTER[tast] ?? { tast, tekst: '', kontroller: 'Ukjent tast' };
-}
+/** Startlisten for Staircon-prosessen. Redigeres senere i appen. */
+export const STAIRCON_TASTER: Hurtigtast[] = Object.values(HURTIGTASTER);

@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Database, Farge, Kort, KortType, Stasjon } from './types';
-import { SEED } from './seed';
+import { SEED, STAIRCON_POST } from './seed';
 
 /* ─────────────────────────────────────────────────────────────
    Datalaget. Appen snakker bare med en «Lager»-adapter, så vi kan
@@ -94,6 +94,25 @@ export function migrer(d: Gammel): Database {
   if (d.skjema < 4) {
     // v4: prosjekter (Staircon-løp) lagres i databasen.
     d = { ...d, skjema: 4, prosjekter: d.prosjekter ?? [] };
+  }
+  if (d.skjema < 5) {
+    // v5: prosesser blir data (redigerbare, versjonerte, med ID og QR).
+    //     Staircon kobles til stasjonen sin, og prosjekter låses til versjon 1.
+    const kobleStaircon = (s: Stasjon): Stasjon => ({
+      ...s,
+      prosessId: s.id === 'staircon' ? 'staircon' : s.prosessId,
+      grener: s.grener?.map(kobleStaircon),
+    });
+    const kort = (d.kort as Kort[]).map((k) => ({ ...k, stasjoner: k.stasjoner.map(kobleStaircon) }));
+    d = {
+      ...d,
+      skjema: 5,
+      kort,
+      revisjoner: d.revisjoner.map((r: Gammel) => ({ ...r, kort: r.kort.map((k: Kort) => ({ ...k, stasjoner: k.stasjoner.map(kobleStaircon) })) })),
+      prosesser: d.prosesser ?? [STAIRCON_POST],
+      innstillinger: d.innstillinger ?? {},
+      prosjekter: d.prosjekter.map((p: Gammel) => ({ ...p, prosessVersjon: p.prosessVersjon ?? 1 })),
+    };
   }
   return d as Database;
 }

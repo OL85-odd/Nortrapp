@@ -55,6 +55,13 @@ export function endre(fn: (k: Kort[]) => Kort[]) {
   lagreUtkast(etter);
 }
 
+/** Endrer utkastet uten angre-steg — for ting som allerede er lagret direkte (f.eks. kobling til prosess). */
+export function speilIUtkast(fn: (k: Kort[]) => Kort[]) {
+  if (!utkast.value) return;
+  utkast.value = fn(utkast.value);
+  lagreUtkast(utkast.value);
+}
+
 export function angre() {
   const stabel = angreStabel.value;
   if (!stabel.length) return;

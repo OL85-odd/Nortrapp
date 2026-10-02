@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Bilde } from '../types';
-import { bildeUrl } from '../bilder';
+import { BildeVisning } from './BildeVisning';
 
 /** Viser et bilde i full størrelse. ← → blar, Esc lukker. */
 export function Lightbox({ bilder, start, onLukk }: { bilder: Bilde[]; start: number; onLukk: () => void }) {
@@ -21,7 +21,7 @@ export function Lightbox({ bilder, start, onLukk }: { bilder: Bilde[]; start: nu
   return (
     <div class="lightbox" role="dialog" aria-modal="true" aria-label={b.tekst} onClick={onLukk}>
       <figure onClick={(e) => e.stopPropagation()}>
-        <img src={bildeUrl(b.fil)} alt={b.tekst} />
+        <BildeVisning fil={b.fil} alt={b.tekst} />
         <figcaption>
           {b.tekst}
           {bilder.length > 1 && (

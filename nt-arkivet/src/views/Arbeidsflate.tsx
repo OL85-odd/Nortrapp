@@ -3,37 +3,70 @@ import { db } from '../data/store';
 import { fargeVar } from '../data/types';
 import { aktivtSteg, fremdrift, skjulteSteg } from '../prosess/motor';
 import type { Prosjekt, ProsjektType } from '../prosess/types';
-import { finnGamleProsjekter, importerGamle, opprett, PROSESSER } from '../prosess/prosjekter';
+import { KATEGORIER } from '../prosess/types';
+import { finnGamleProsjekter, importerGamle, opprett, prosessFor } from '../prosess/prosjekter';
+import { hentPost, sisteVersjon, stasjonerFor } from '../prosess/arkiv';
+import { redigerer } from '../edit/state';
+import { bruker } from '../ui/settings';
 import { Modal } from '../ui/Modal';
 import { modus } from '../ui/settings';
-import { finnStasjon } from './Oversikt';
 import { oppsummering } from './ProsjektVisning';
+import { LesVisning } from './LesVisning';
 import '../prosess/ui/prosess.css';
 
 interface Props {
-  stasjonId: string;
+  prosessId: string;
   onApne: (prosjektId: string) => void;
   onTilbake: () => void;
 }
 
-/** Arbeidsflaten for en stasjon med prosess (f.eks. Staircon): prosjekter, tilbud og øving. */
-export function Arbeidsflate({ stasjonId, onApne, onTilbake }: Props) {
-  const prosess = PROSESSER[stasjonId];
-  const sted = finnStasjon(db.value.kort, stasjonId);
+/** Siste fullførte gjennomføring, og om en gjentakende rutine er forfalt. */
+export function forfall(prosessId: string): { forfalt: boolean; tekst: string } | null {
+  const post = hentPost(prosessId);
+  const dager = post && sisteVersjon(post).prosess.intervallDager;
+  if (!dager) return null;
+  const sist = db.value.prosjekter
+    .filter((p) => p.prosessId === prosessId && p.ferdig && p.type !== 'ovelse')
+    .map((p) => p.ferdig!)
+    .sort()
+    .pop();
+  if (!sist) return { forfalt: true, tekst: 'Aldri utført' };
+  const igjen = Math.ceil((new Date(sist).getTime() + dager * 864e5 - Date.now()) / 864e5);
+  return igjen < 0
+    ? { forfalt: true, tekst: `Forfalt for ${-igjen} dag${igjen === -1 ? '' : 'er'} siden` }
+    : { forfalt: false, tekst: igjen === 0 ? 'Forfaller i dag' : `Forfaller om ${igjen} dag${igjen === 1 ? '' : 'er'}` };
+}
+
+/** Arbeidsflaten for en prosess: prosjekter, tilbud og øving — eller gjennomføringer for enkle rutiner. */
+export function Arbeidsflate({ prosessId, onApne, onTilbake }: Props) {
+  const post = hentPost(prosessId);
   const [ny, setNy] = useState<ProsjektType | null>(null);
   const [visFerdige, setVisFerdige] = useState(false);
-  const gamle = finnGamleProsjekter().length;
+  const gamle = prosessId === 'staircon' ? finnGamleProsjekter().length : 0;
 
-  if (!prosess) return null;
-  const alle = db.value.prosjekter.filter((p) => p.prosessId === prosess.id);
-  const aktive = alle.filter((p) => p.type === 'prosjekt' && !p.ferdig);
+  if (!post) return <main class="arbeidsflate">Fant ikke prosessen.</main>;
+  const versjon = sisteVersjon(post);
+  const prosess = versjon.prosess;
+  if (prosess.kunLesing) return <LesVisning id={prosessId} onTilbake={onTilbake} />;
+  const sted = stasjonerFor(prosessId)[0];
+  const f = forfall(prosessId);
+
+  const alle = db.value.prosjekter.filter((p) => p.prosessId === prosessId);
+  const erProsjekt = !!prosess.prosjekter;
+  const aktive = alle.filter((p) => (p.type === 'prosjekt' || p.type === 'gjennomforing') && !p.ferdig);
   const tilbud = alle.filter((p) => p.type === 'tilbud');
   const ovelser = alle.filter((p) => p.type === 'ovelse');
-  const ferdige = alle.filter((p) => p.type === 'prosjekt' && p.ferdig);
+  const ferdige = alle.filter((p) => (p.type === 'prosjekt' || p.type === 'gjennomforing') && p.ferdig).sort((a, b) => (b.ferdig! > a.ferdig! ? 1 : -1));
 
   const ov = async () => {
-    const p = await opprett({ prosessId: prosess.id, type: 'ovelse', nummer: 'Øving ' + new Date().toLocaleDateString('nb-NO') });
+    const p = await opprett({ prosessId, type: 'ovelse', nummer: 'Øving ' + new Date().toLocaleDateString('nb-NO') });
     modus.value = 'opplaring';
+    onApne(p.id);
+  };
+
+  const start = async () => {
+    const ini = db.value.brukere.find((b) => b.id === bruker.value)?.initialer ?? '';
+    const p = await opprett({ prosessId, type: 'gjennomforing', nummer: `${new Date().toLocaleDateString('nb-NO')} ${ini}`.trim() });
     onApne(p.id);
   };
 
@@ -45,18 +78,39 @@ export function Arbeidsflate({ stasjonId, onApne, onTilbake }: Props) {
             ← NT-Arkivet
           </button>
           <span class="label">
-            {sted ? `${sted.kort.kode} · ${sted.kort.navn}` : ''} · {prosess.navn} v{prosess.versjon}
+            {post.nr} · {KATEGORIER[post.kategori]}
+            {sted ? ` · ${sted.kort.navn}` : ''} · versjon {versjon.nr}
           </span>
           <h1 class="dot af-tittel">{prosess.navn}</h1>
-          <p class="af-tekst">{sted?.stasjon.beskrivelse ?? ''} Hvert svar bygger resten av stien, så du blir guidet gjennom alt som gjelder akkurat denne trappen.</p>
+          <p class="af-tekst">
+            {prosess.beskrivelse ?? sted?.stasjon.beskrivelse ?? ''}
+            {erProsjekt ? ' Hvert svar bygger resten av stien, så du blir guidet gjennom alt som gjelder akkurat dette prosjektet.' : ''}
+          </p>
+          {f && <span class={`chip ${f.forfalt ? 'fare' : 'aktiv'}`}>{f.tekst} · hver {prosess.intervallDager}. dag</span>}
         </div>
         <div class="af-knapper">
-          <button class="btn btn-primary" onClick={() => setNy('prosjekt')}>
-            + Nytt prosjekt
-          </button>
-          <button class="btn" onClick={() => setNy('tilbud')}>
-            + Nytt tilbud
-          </button>
+          {erProsjekt ? (
+            <>
+              <button class="btn btn-primary" onClick={() => setNy('prosjekt')}>
+                + Nytt prosjekt
+              </button>
+              <button class="btn" onClick={() => setNy('tilbud')}>
+                + Nytt tilbud
+              </button>
+            </>
+          ) : (
+            <button class="btn btn-primary" onClick={start}>
+              Start {prosess.intervallDager ? 'og kvitter' : 'gjennomføring'}
+            </button>
+          )}
+          <a class="btn" href={`#/qr/${prosessId}`}>
+            QR
+          </a>
+          {redigerer.value && (
+            <a class="btn" href={`#/rediger/${prosessId}`}>
+              ✎ Rediger prosess
+            </a>
+          )}
           <button class="btn" onClick={ov} title="Gå gjennom hele prosessen med full forklaring, uten å lagre et ekte prosjekt">
             Øv / opplæring
           </button>
@@ -74,7 +128,7 @@ export function Arbeidsflate({ stasjonId, onApne, onTilbake }: Props) {
         </div>
       </header>
 
-      <Seksjon tittel="Aktive prosjekter" liste={aktive} tom="Ingen aktive prosjekter. Start et nytt." onApne={onApne} />
+      <Seksjon tittel={erProsjekt ? 'Aktive prosjekter' : 'Pågår'} liste={aktive} tom={erProsjekt ? 'Ingen aktive prosjekter. Start et nytt.' : undefined} onApne={onApne} />
       {tilbud.length > 0 && <Seksjon tittel="Tilbud" liste={tilbud} onApne={onApne} />}
       {ovelser.length > 0 && <Seksjon tittel="Øving" liste={ovelser} onApne={onApne} />}
       {ferdige.length > 0 && (
@@ -86,7 +140,23 @@ export function Arbeidsflate({ stasjonId, onApne, onTilbake }: Props) {
         </section>
       )}
 
-      {ny && <NyDialog type={ny} prosessId={prosess.id} onLukk={() => setNy(null)} onOpprettet={onApne} />}
+      {!erProsjekt && ferdige.length > 0 && !visFerdige && (
+        <section class="af-seksjon">
+          <h2 class="label af-seksjon-tittel">Siste gjennomføringer</h2>
+          <ul class="kvitteringer">
+            {ferdige.slice(0, 5).map((p) => (
+              <li key={p.id}>
+                <button class="velger-lenke" onClick={() => onApne(p.id)}>
+                  ✓ {new Date(p.ferdig!).toLocaleString('nb-NO', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })} ·{' '}
+                  {db.value.brukere.find((b) => b.id === p.opprettetAv)?.initialer ?? '—'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {ny && <NyDialog type={ny} prosessId={prosessId} onLukk={() => setNy(null)} onOpprettet={onApne} />}
     </main>
   );
 }
@@ -108,7 +178,7 @@ function Seksjon({ tittel, liste, tom, onApne }: { tittel: string; liste: Prosje
 }
 
 function ProsjektKort({ p, onApne }: { p: Prosjekt; onApne: (id: string) => void }) {
-  const prosess = PROSESSER[p.prosessId];
+  const prosess = prosessFor(p);
   const fr = fremdrift(prosess, p);
   const skjulte = skjulteSteg(prosess, p.svar);
   const neste = aktivtSteg(prosess, p);

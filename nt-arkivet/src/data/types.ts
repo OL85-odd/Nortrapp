@@ -1,4 +1,4 @@
-import type { Prosjekt } from '../prosess/types';
+import type { ProsessPost, Prosjekt } from '../prosess/types';
 
 /* Datamodellen for NT-Arkivet.
    Alt som lagres er rene JSON-objekter, slik at samme data kan ligge i
@@ -13,7 +13,8 @@ export interface Stasjon {
   /** Kort forklaring som vises i kartet og i sidepanelet. */
   beskrivelse?: string;
   status: StasjonStatus;
-  prosedyreId?: string;
+  /** Prosessen (fra arkivet) som hører til stasjonen. */
+  prosessId?: string;
   /** Alternative spor, f.eks. Staircon / Fusion / FreeCAD under «Tegning». Bare på linjer. */
   grener?: Stasjon[];
 }
@@ -85,6 +86,12 @@ export interface Database {
   brukere: Bruker[];
   revisjoner: Revisjon[];
   prosjekter: Prosjekt[];
+  /** Alle prosesser og prosedyrer (Staircon, kaffemaskin …) med versjoner. */
+  prosesser: ProsessPost[];
+  innstillinger: {
+    /** Adressen appen har på serveren, f.eks. http://nt-arkivet/. Brukes i QR-koder. */
+    serverAdresse?: string;
+  };
   /** SHA-256 av PIN-koden for redigeringsmodus. Ikke ekte sikkerhet — hindrer uhell. */
   pinHash?: string;
 }

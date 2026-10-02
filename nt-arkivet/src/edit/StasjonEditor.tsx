@@ -3,7 +3,11 @@ import { nyId } from '../data/store';
 import type { Stasjon } from '../data/types';
 import { fargeVar } from '../data/types';
 import * as op from './ops';
-import { endre, synligeKort } from './state';
+import { endre, speilIUtkast, synligeKort } from './state';
+import { useState } from 'preact/hooks';
+import { db } from '../data/store';
+import { hentPost, kobleIKort, kobleStasjon, sisteVersjon } from '../prosess/arkiv';
+import { NyProsessDialog } from '../views/Prosessarkiv';
 
 interface Props {
   stasjonId: string;
@@ -97,10 +101,7 @@ export function StasjonEditor({ stasjonId, onVelg, onLukk }: Props) {
         </div>
       </div>
 
-      <div class="felt">
-        <span>Prosedyre</span>
-        <p class="panel-hint">Kobling til prosedyre kommer sammen med prosedyrebiblioteket.</p>
-      </div>
+      <ProsessKobling stasjon={stasjon} />
 
       <div class="felt">
         <span>Plassering</span>
@@ -159,5 +160,60 @@ export function StasjonEditor({ stasjonId, onVelg, onLukk }: Props) {
         </button>
       </div>
     </aside>
+  );
+}
+
+/** Koble stasjonen til en prosess: lag ny fra mal, velg en eksisterende, eller fjern koblingen. */
+function ProsessKobling({ stasjon }: { stasjon: Stasjon }) {
+  const [ny, setNy] = useState(false);
+  const post = stasjon.prosessId ? hentPost(stasjon.prosessId) : undefined;
+  const koble = async (id: string | undefined) => {
+    await kobleStasjon(stasjon.id, id);
+    speilIUtkast((k) => kobleIKort(k, stasjon.id, id));
+  };
+  return (
+    <div class="felt">
+      <span>Prosess / prosedyre</span>
+      {post ? (
+        <div class="kobling">
+          <strong>
+            {post.nr} · {sisteVersjon(post).prosess.navn}
+          </strong>
+          <div class="knapperad">
+            <a class="btn liten btn-primary" href={`#/rediger/${post.id}`}>
+              ✎ Rediger prosessen
+            </a>
+            <a class="btn liten" href={`#/qr/${post.id}`}>
+              QR
+            </a>
+            <button class="btn liten" onClick={() => confirm('Fjerne koblingen? Prosessen blir liggende i arkivet.') && koble(undefined)}>
+              Fjern kobling
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div class="knapperad">
+          <button class="btn liten btn-primary" onClick={() => setNy(true)}>
+            + Lag prosess
+          </button>
+          <select
+            value=""
+            aria-label="Koble til eksisterende prosess"
+            onChange={(e) => {
+              const id = (e.target as HTMLSelectElement).value;
+              if (id) koble(id);
+            }}
+          >
+            <option value="">Koble til eksisterende …</option>
+            {db.value.prosesser.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nr} · {sisteVersjon(p).prosess.navn}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {ny && <NyProsessDialog stasjonId={stasjon.id} standardNavn={stasjon.navn} onLukk={() => setNy(false)} />}
+    </div>
   );
 }

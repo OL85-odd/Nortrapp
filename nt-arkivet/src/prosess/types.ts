@@ -31,11 +31,15 @@ export interface Felt {
   nokkel: string;
   etikett: string;
   plassholder?: string;
+  /** Tallfelt kan brukes i kryss-kontroll og beregninger. */
+  type?: 'tekst' | 'tall';
+  enhet?: string;
   /** Vises i statuslinjen/rapporten når den er fylt ut. */
   viktig?: boolean;
 }
 
 export interface Bilde {
+  /** Filnavn i appen (f.eks. «p1-….webp») eller «media:<id>» for opplastede bilder. */
   fil: string;
   tekst: string;
 }
@@ -53,6 +57,10 @@ export interface Steg {
   /** Forklaring fra Staircons hjelpefil (oversatt til norsk). */
   hjelp?: { kilde: string; tekst: string };
   dokument?: { fil: string; tekst: string };
+  /** Video på serveren eller en nettlenke. */
+  video?: { kilde: string; tekst: string };
+  /** Lenke til en annen prosess, f.eks. «Følg NT-MAS-002 Kantpresse». */
+  lenke?: { prosessId: string; tekst?: string };
   farger?: { farge: string; hex: string; tekst: string }[];
   felter?: Felt[];
   valg?: Valg;
@@ -69,19 +77,74 @@ export interface Fase {
   steg: Steg[];
 }
 
+/** Programvare får hurtigtastpanel. Maskiner og annet får «Kjekt å vite». */
+export type ProsessType = 'programvare' | 'maskin' | 'annet';
+
+export interface Hurtigtast {
+  tast: string;
+  tekst: string;
+  /** Kildene er uenige eller tasten er ukjent — må kontrolleres. */
+  kontroller?: string;
+}
+
 export interface Prosess {
   id: string;
   navn: string;
   versjon: string;
   oppdatert: string;
+  beskrivelse?: string;
+  type?: ProsessType;
+  /** Instruks som bare skal leses — ingen avkrysning eller logg. */
+  kunLesing?: boolean;
+  /** Kjøres som prosjekter med nummer, kunde og tilbud (som Staircon). Ellers som gjennomføringer. */
+  prosjekter?: boolean;
+  /** Gjentakende rutine: forfaller så mange dager etter siste gjennomføring. */
+  intervallDager?: number;
+  /** Hurtigtastene prosessen bruker (programvare). */
+  hurtigtaster?: Hurtigtast[];
+  /** Taster som vises i panelet uansett steg. */
+  alltidTaster?: string[];
+  /** Fritekst i panelet for maskiner og annet. Én linje per punkt. */
+  kjektAVite?: string;
   faser: Fase[];
+}
+
+/* ── Prosessarkivet ────────────────────────────────────────── */
+
+export const KATEGORIER = {
+  MAS: 'Maskiner',
+  FAS: 'Fasiliteter',
+  PRO: 'Programvare',
+  HMS: 'HMS',
+  ADM: 'Administrasjon',
+  PRD: 'Produksjon',
+} as const;
+export type Kategori = keyof typeof KATEGORIER;
+
+/** En publisert versjon. Hele innholdet lagres, så prosjekter kan låses til den. */
+export interface ProsessVersjon {
+  nr: number;
+  dato: string;
+  brukerId: string | null;
+  kommentar: string;
+  endringer: string[];
+  prosess: Prosess;
+}
+
+/** En prosess i arkivet. `nr` (f.eks. NT-PRO-001) settes én gang og endres aldri — QR-koder peker hit. */
+export interface ProsessPost {
+  id: string;
+  nr: string;
+  kategori: Kategori;
+  opprettet: string;
+  versjoner: ProsessVersjon[];
 }
 
 /* ── Prosjekter ────────────────────────────────────────────── */
 
 export type Svar = string | string[];
 
-export type LoggType = 'opprettet' | 'utfort' | 'angret' | 'svar' | 'felt' | 'notat' | 'omgjort' | 'importert';
+export type LoggType = 'opprettet' | 'utfort' | 'angret' | 'svar' | 'felt' | 'notat' | 'omgjort' | 'importert' | 'oppgradert';
 
 export interface LoggPost {
   tid: string;
@@ -91,11 +154,14 @@ export interface LoggPost {
   tekst: string;
 }
 
-export type ProsjektType = 'prosjekt' | 'tilbud' | 'ovelse';
+/** «gjennomforing» er én kjøring av en enkel rutine (f.eks. rengjøring). */
+export type ProsjektType = 'prosjekt' | 'tilbud' | 'ovelse' | 'gjennomforing';
 
 export interface Prosjekt {
   id: string;
   prosessId: string;
+  /** Prosjektet er låst til denne versjonen av prosessen. */
+  prosessVersjon: number;
   type: ProsjektType;
   /** Prosjektnummer (HXXX-XX) eller tilbudsnavn. */
   nummer: string;

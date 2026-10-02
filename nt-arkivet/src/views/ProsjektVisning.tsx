@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'preact/hooks';
 import { aktivtSteg, faseFor, fremdrift, naboSteg, nesteUgjorte, skjulteSteg, sti, svarTekst } from '../prosess/motor';
 import type { Prosess, Prosjekt, Steg } from '../prosess/types';
-import { gjorOmTilProsjekt, hentProsjekt, prosessFor, settAktivt, settFerdig, settTilbudsinfo, settUtfort, slettProsjekt, svar } from '../prosess/prosjekter';
+import { gjorOmTilProsjekt, hentProsjekt, oppgraderVersjon, prosessFor, settAktivt, settFerdig, settTilbudsinfo, settUtfort, slettProsjekt, svar } from '../prosess/prosjekter';
+import { hentPost, nyesteVersjonsnr } from '../prosess/arkiv';
+import { redigerer } from '../edit/state';
+import { StegEditor } from '../prosess/redigering/StegEditor';
+import { endringerI } from '../prosess/redigering/state';
+import { Modal } from '../ui/Modal';
 import { FaseStripe } from '../prosess/ui/FaseStripe';
 import { HurtigtastPanel } from '../prosess/ui/HurtigtastPanel';
 import { Sjekkliste } from '../prosess/ui/Sjekkliste';
@@ -109,7 +114,9 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
   };
 
   const viktigeFelt = (['overflate', 'endelister'] as const).filter((k) => p.felt[k]);
-  const typeNavn = p.type === 'tilbud' ? 'Tilbud' : p.type === 'ovelse' ? 'Øving' : 'Prosjekt';
+  const typeNavn = { tilbud: 'Tilbud', ovelse: 'Øving', prosjekt: 'Prosjekt', gjennomforing: 'Gjennomføring' }[p.type];
+  const post = hentPost(p.prosessId);
+  const nyeste = nyesteVersjonsnr(p.prosessId);
 
   return (
     <main class="prosjekt">
@@ -119,7 +126,7 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
             ← {prosess.navn} · alle prosjekter
           </button>
           <span class="label">
-            {typeNavn} · {prosess.navn} v{prosess.versjon}
+            {typeNavn} · {post?.nr} · {prosess.navn} · versjon {p.prosessVersjon}
           </span>
           <h1 class="dot ph-nummer">{p.nummer}</h1>
           <p class="ph-kunde">{[p.kunde, p.kalkylenr && `Kalkyle ${p.kalkylenr}`].filter(Boolean).join(' · ') || ' '}</p>
@@ -157,18 +164,33 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
 
       {p.type === 'tilbud' && <TilbudKort p={p} />}
 
+      {nyeste > p.prosessVersjon && !p.ferdig && (
+        <div class="versjon-banner card">
+          <span>
+            <strong>Ny versjon av {prosess.navn} (versjon {nyeste}) er publisert.</strong> Dette {typeNavn.toLowerCase()}et følger versjon {p.prosessVersjon}, som det ble
+            startet på.
+          </span>
+          <button
+            class="btn liten"
+            onClick={() => confirm(`Flytte «${p.nummer}» over på versjon ${nyeste}? Det du har krysset av beholdes. Nye steg dukker opp, og steg som er fjernet blir «forlatte grener».`) && oppgraderVersjon(p.id)}
+          >
+            Oppgrader til versjon {nyeste}
+          </button>
+        </div>
+      )}
+
       <FaseStripe faser={faser} prosjekt={p} aktivFase={aktivFase} skjulte={skjulte} onVelgFase={velgFase} />
 
       {fr.prosent === 100 && skjulte === 0 && p.type !== 'tilbud' && (
         <div class="ferdig-banner card">
-          <span class="dot">Alle steg er utført</span>
+          <span class="dot">{p.ferdig ? `Ferdig ${new Date(p.ferdig).toLocaleDateString('nb-NO')}` : 'Alle steg er utført'}</span>
           {p.ferdig ? (
             <button class="btn" onClick={() => settFerdig(p.id, false)}>
               Gjenåpne
             </button>
           ) : (
             <button class="btn btn-primary" onClick={() => settFerdig(p.id, true)}>
-              Marker som ferdig
+              {p.type === 'gjennomforing' ? 'Kvitter som utført' : 'Marker som ferdig'}
             </button>
           )}
         </div>
@@ -208,7 +230,7 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
             </>
           )}
         </div>
-        <HurtigtastPanel steg={m === 'oversikt' ? null : aktivt} />
+        <HurtigtastPanel prosess={prosess} steg={m === 'oversikt' ? null : aktivt} />
       </div>
     </main>
   );
@@ -232,6 +254,7 @@ function Opplaering({ steg, prosess, p, faseNavn, onUtfort, onGa }: OpplProps) {
   const neste = naboSteg(prosess, p.svar, steg.id, 1);
   const gjort = !!p.utfort[steg.id];
   const venter = !!steg.valg && p.svar[steg.id] === undefined;
+  const [rediger, setRediger] = useState(false);
 
   return (
     <article class="steg-kort card" key={steg.id} aria-labelledby="steg-tittel">
@@ -239,8 +262,16 @@ function Opplaering({ steg, prosess, p, faseNavn, onUtfort, onGa }: OpplProps) {
         <span class="label">
           {faseNavn} · steg {nr} av {fase?.steg.length}
         </span>
-        {gjort && <span class="chip aktiv">Utført</span>}
+        <span class="knapperad">
+          {gjort && <span class="chip aktiv">Utført</span>}
+          {redigerer.value && (
+            <button class="btn liten btn-primary" onClick={() => setRediger(true)} title="Endre dette steget i prosessen">
+              ✎ Rediger steget
+            </button>
+          )}
+        </span>
       </div>
+      {rediger && <InlineRedigering prosessId={p.prosessId} stegId={steg.id} gammel={p.prosessVersjon < nyesteVersjonsnr(p.prosessId)} onLukk={() => setRediger(false)} />}
       <h2 id="steg-tittel" class="steg-tittel">
         {steg.tittel}
       </h2>
@@ -265,6 +296,28 @@ function Opplaering({ steg, prosess, p, faseNavn, onUtfort, onGa }: OpplProps) {
         )}
       </div>
     </article>
+  );
+}
+
+/* ── Rediger steget rett fra opplæringsvisningen ───────────── */
+
+function InlineRedigering({ prosessId, stegId, gammel, onLukk }: { prosessId: string; stegId: string; gammel: boolean; onLukk: () => void }) {
+  const [valgt, setValgt] = useState<string | null>(stegId);
+  const antall = endringerI(prosessId).length;
+  return (
+    <Modal tittel="Rediger steget" etikett="Endringer havner i utkastet til prosessen" onLukk={onLukk} bred>
+      {gammel && <p class="husk">Dette prosjektet følger en eldre versjon. Du redigerer utkastet til den nyeste versjonen.</p>}
+      {valgt ? <StegEditor prosessId={prosessId} stegId={valgt} onVelg={setValgt} /> : <p>Steget er slettet fra utkastet.</p>}
+      <div class="modal-knapper">
+        <span class="editbar-antall">{antall ? `${antall} endring${antall === 1 ? '' : 'er'} i utkast` : 'Ingen endringer ennå'}</span>
+        <a class="btn" href={`#/rediger/${prosessId}`}>
+          Strukturkart og publisering →
+        </a>
+        <button class="btn btn-primary" onClick={onLukk}>
+          Ferdig
+        </button>
+      </div>
+    </Modal>
   );
 }
 

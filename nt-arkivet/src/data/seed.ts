@@ -1,4 +1,6 @@
 import type { Database, Kort } from './types';
+import type { ProsessPost } from '../prosess/types';
+import { STAIRCON } from '../prosess/staircon/staircon';
 
 /* Startinnholdet første gang appen åpnes.
    Senere endres dette i redigeringsmodus — ikke her. */
@@ -36,6 +38,7 @@ const KORT: Kort[] = [
             id: 'staircon',
             navn: 'Staircon',
             status: 'aktiv',
+            prosessId: 'staircon',
             beskrivelse: 'Trapper tegnes og produksjonsunderlag lages i Staircon.',
           },
           { id: 'fusion', navn: 'Fusion 360', status: 'under_arbeid' },
@@ -100,8 +103,25 @@ const KORT: Kort[] = [
   },
 ];
 
+export const STAIRCON_POST: ProsessPost = {
+  id: 'staircon',
+  nr: 'NT-PRO-001',
+  kategori: 'PRO',
+  opprettet: '2026-10-02T00:00:00.000Z',
+  versjoner: [
+    {
+      nr: 1,
+      dato: '2026-10-02T00:00:00.000Z',
+      brukerId: null,
+      kommentar: 'Staircon v3.0 — bygget på ABC v2.9 og kvalitetssikret mot hjelpefilen.',
+      endringer: [],
+      prosess: STAIRCON,
+    },
+  ],
+};
+
 export const SEED: Database = {
-  skjema: 4,
+  skjema: 5,
   oppdatert: '2026-10-02',
   brukere: [
     { id: 'b-ol', initialer: 'OL', navn: 'Odd' },
@@ -110,6 +130,8 @@ export const SEED: Database = {
   ],
   kort: KORT,
   prosjekter: [],
+  prosesser: [STAIRCON_POST],
+  innstillinger: {},
   revisjoner: [
     {
       nr: 1,

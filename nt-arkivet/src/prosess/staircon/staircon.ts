@@ -1,4 +1,5 @@
 import type { Prosess } from '../types';
+import { ALLTID, STAIRCON_TASTER } from './hurtigtaster';
 
 /* ─────────────────────────────────────────────────────────────
    NORTRAPP · Staircon — fra produksjonsordre til produksjonsmappe
@@ -22,6 +23,11 @@ export const STAIRCON: Prosess = {
   navn: 'Staircon',
   versjon: '3.0',
   oppdatert: '2026-10-02',
+  beskrivelse: 'Fra produksjonsordre i Kalken til ferdig produksjonsmappe.',
+  type: 'programvare',
+  prosjekter: true,
+  hurtigtaster: STAIRCON_TASTER,
+  alltidTaster: ALLTID,
   faser: [
     /* ───────────────────────────── 0 · OPPSETT ───────────────────────────── */
     {

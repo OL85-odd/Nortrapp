@@ -1,6 +1,6 @@
 import type { Kort, Stasjon } from '../data/types';
 import { fargeVar } from '../data/types';
-import { alleStasjoner, nyId } from '../data/store';
+import { alleStasjoner, db, nyId } from '../data/store';
 import { MetroMap } from '../map/MetroMap';
 import { Samling } from '../map/Samling';
 import { StasjonPanel } from './StasjonPanel';
@@ -70,6 +70,9 @@ export function Oversikt({ rute, onNaviger }: Props) {
           <p class="oversikt-ingress">
             Hele Nortrapp som linjer og samlinger. Velg en stasjon for å se prosedyren, lære den eller starte et prosjekt.
           </p>
+          <a class="btn oversikt-arkiv" href="#/prosesser">
+            Prosessarkiv · {db.value.prosesser.length}
+          </a>
         </div>
         <dl class="tall">
           <div>

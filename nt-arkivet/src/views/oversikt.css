@@ -264,3 +264,7 @@
     max-height: calc(100vh - var(--topbar-h) - 80px);
   }
 }
+
+.oversikt-arkiv {
+  margin-top: 14px;
+}

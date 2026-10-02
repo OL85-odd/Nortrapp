@@ -141,11 +141,128 @@
 /* ── Prosjekthode ──────────────────────────────────────────── */
 
 .prosjekt-hode {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
   padding: 24px 28px;
+}
+
+@media (max-width: 800px) {
+  .prosjekt-hode {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.versjon-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  border-color: var(--secondary);
+  background: var(--secondary-soft);
+}
+
+.kjekt-liste {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.les-fase {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.les-fase-tittel {
+  font-size: 20px;
+}
+
+.les-steg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.les-steg h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 19px;
+}
+
+.les-nr {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 16px;
+}
+
+.video video {
+  width: 100%;
+  max-height: 420px;
+  border-radius: var(--radius-m);
+  background: #000;
+}
+
+.video {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.video figcaption {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.lenke-kloss {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--secondary);
+  border-radius: var(--radius-m);
+  background: var(--secondary-soft);
+  text-decoration: none;
+}
+
+.lenke-kloss span:last-child {
+  margin-left: auto;
+}
+
+.valg-knapp.forhand {
+  cursor: default;
+}
+
+.bilde-mangler {
+  display: block;
+  padding: 20px;
+  color: #666;
+  font-size: 13px;
+}
+
+.kvitteringer {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .ph-venstre {

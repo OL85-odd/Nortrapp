@@ -254,9 +254,9 @@ Dette skal rettes eller avklares:
 | M2 ✅ | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
 | M3 | Endringslogg med «må kontrolleres», valghistorikk, tid/pause/avbrudd, rapport, tilbud | Rapporten viser endringer og tid |
 | M4 | Dokumentimport: pdf.js + OCR + redigerbart regelbibliotek | Eksempeldokumentene gir riktige felt |
-| M5 | Prosedyrebibliotek med QR, revisjoner, intervall/kvittering, 2–3 eksempler | QR-lapp kan skrives ut |
+| M5 ✅ | Prosessarkiv med faste ID-er (NT-MAS-001 …), QR-lapper, versjoner, intervall/kvittering, «Kun lesing», «Kjekt å vite», 8 maler | QR-lapp kan skrives ut |
 | M6a ✅ | Redigeringsmodus (PIN) for kort, linjer, samlinger og stasjoner: utkast, angre, publisering med kommentar, historikk og tilbakestilling | Kartet kan bygges om uten kode |
-| M6b | Redigering av innholdet i prosedyrer: steg, valg og regler | Et nytt steg kan legges til uten kode |
+| M6b ✅ | Prosessredigering: strukturkart + ✎ i opplæring, byggeklosser (tekst, Husk, bilder, video, valg, felt, verdier, hurtigtaster, dokument, lenke, hjelp, farger), regler med nedtrekkslister, publisering med versjonslåste prosjekter og «Oppgrader» | Et nytt steg kan legges til uten kode |
 
 **Ikke med nå:** SharePoint, ekte innlogging, AI-tjenester, integrasjon med den
 nye kalkulasjonsappen (vurderes når den finnes). Brukere velger initialer ved oppstart.

@@ -1,0 +1,758 @@
+/* ── Prosessredigering: strukturkart + panel ──────────────── */
+
+.prosessredigering {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.pr-hode {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 22px 26px;
+  border-color: var(--accent);
+}
+
+.pr-hode > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.pr-tittel {
+  font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.05;
+}
+
+.pr-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.pr-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.pr-panel {
+  position: sticky;
+  top: calc(var(--topbar-h) + 64px);
+  max-height: calc(100vh - var(--topbar-h) - 80px);
+  overflow: auto;
+  border-radius: var(--radius-l);
+}
+
+/* Strukturkartet: hele prosessen som én loddrett linje */
+.strukturkart {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sk2-innst,
+.sk2-fase-hode,
+.sk2-rad {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: none;
+  text-align: left;
+}
+
+.sk2-innst {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+
+.sk2-innst:hover,
+.sk2-fase-hode:hover,
+.sk2-rad:hover {
+  background: var(--surface-2);
+}
+
+.valgt.sk2-innst,
+.valgt.sk2-fase-hode,
+.valgt.sk2-rad {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sk2-fase-hode {
+  margin-top: 6px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sk2-fase-punkt {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 4px solid var(--accent);
+  background: var(--surface);
+  flex: none;
+}
+
+.sk2-steg {
+  list-style: none;
+  margin: 0 0 0 18px;
+  padding: 0 0 4px 0;
+  border-left: 4px solid var(--track-idle);
+}
+
+.sk2-steg li {
+  position: relative;
+}
+
+.sk2-punkt {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-left: -18px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--surface);
+}
+
+.sk2-tittel {
+  flex: 1;
+  min-width: 140px;
+  font-size: 14px;
+}
+
+.sk2-ikoner {
+  display: flex;
+  gap: 4px;
+}
+
+.sk2-ikon {
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-soft);
+}
+
+.sk2-regel {
+  flex-basis: 100%;
+  padding-left: 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--secondary);
+}
+
+/* Lite «+» mellom stegene for å sette inn et nytt */
+.sk2-pluss {
+  position: absolute;
+  left: -13px;
+  top: -9px;
+  z-index: 1;
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  border: 1px dashed var(--accent);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.sk2-steg li:hover .sk2-pluss,
+.sk2-pluss:focus-visible {
+  opacity: 1;
+}
+
+.sk2-ny {
+  margin: 2px 0 0 4px;
+  padding: 5px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-s);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.sk2-ny:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sk2-ny-fase {
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.sk2-forklaring {
+  margin-top: 12px !important;
+  font-family: var(--font-mono);
+  font-size: 10.5px !important;
+}
+
+/* ── Panelet til høyre ─────────────────────────────────────── */
+
+.steg-editor {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal .steg-editor {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.tittel-felt input {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ed-blokk {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ed-blokk > summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.ed-blokk[open] > summary {
+  margin-bottom: 10px;
+}
+
+.ed-blokk.aktiv {
+  background: var(--surface-2);
+}
+
+.ed-blokk header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ed-rad {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ed-rad > .felt {
+  flex: 1 1 140px;
+  width: auto;
+}
+
+.ed-rad > input,
+.ed-rad > select {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+}
+
+.ed-rad .enhet {
+  flex: 0 0 90px;
+}
+
+.alt-nr {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.felt-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.mini-knapper {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.mini-knapper button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 11px;
+}
+
+.mini-knapper button:disabled {
+  opacity: 0.3;
+}
+
+.mini-knapper button:last-child:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.regel-fjern {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  line-height: 1;
+}
+
+.regel-fjern:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.regler {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.regel {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--secondary-soft);
+}
+
+.regel-linje {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.regel-linje select {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+}
+
+.regel-linje select:nth-of-type(2) {
+  flex: 0 0 auto;
+}
+
+.regel-svar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+}
+
+.regel-avansert code {
+  display: block;
+  padding: 8px;
+  font-size: 11px;
+  word-break: break-all;
+  background: var(--surface-2);
+  border-radius: var(--radius-s);
+}
+
+.sjekk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.sjekk input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.sjekk.stor {
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.sjekk.stor input {
+  margin-top: 3px;
+}
+
+.liten-seg button {
+  padding: 5px 10px;
+}
+
+/* Byggeklosser som kan legges til */
+.ed-ny {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-m);
+}
+
+.ed-ny-knapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+}
+
+.ny-kloss {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  font-size: 13px;
+  text-align: left;
+}
+
+.ny-kloss:hover {
+  border-color: var(--accent);
+}
+
+.ny-ikon {
+  min-width: 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+.ed-fot {
+  position: sticky;
+  bottom: -22px;
+  margin: 0 -22px -22px;
+  padding: 12px 22px;
+  background: var(--surface);
+}
+
+.tast-valgte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tast-chip {
+  text-transform: none;
+}
+
+.tast-chip::before {
+  display: none;
+}
+
+.tast-chip button {
+  border: 0;
+  background: none;
+  padding: 0 0 0 4px;
+  color: inherit;
+}
+
+.tast-rad .tast {
+  flex: 0 0 130px;
+}
+
+.farge-rad input[type='color'] {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: none;
+}
+
+.forhand {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kobling {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+}
+
+.kobling + .knapperad select,
+.knapperad > select {
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 12px;
+}
+
+/* ── Bildesone ─────────────────────────────────────────────── */
+
+.bildesone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 22px 14px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-m);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-soft);
+  cursor: pointer;
+  outline: none;
+}
+
+.bildesone:hover,
+.bildesone:focus-visible,
+.bildesone.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.bildesone strong {
+  color: var(--text);
+  font-size: 14.5px;
+}
+
+.bildeliste {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bildeliste li {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.bilde-mini {
+  width: 72px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.bilde-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bildeliste input {
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+}
+
+/* ── Prosessarkiv og maler ─────────────────────────────────── */
+
+.arkiv-filter {
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+.arkiv-kort {
+  cursor: default;
+}
+
+.arkiv-navn {
+  font-size: 18px;
+}
+
+.mal-valg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.server-adresse {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-l);
+}
+
+.server-adresse .felt {
+  flex: 1 1 280px;
+  width: auto;
+}
+
+.server-adresse .panel-hint {
+  flex-basis: 100%;
+}
+
+/* ── QR-lapper ─────────────────────────────────────────────── */
+
+.qr-side {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.qr-styring {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.qr-styring code {
+  word-break: break-all;
+  font-size: 12px;
+}
+
+.kort-felt {
+  width: 140px;
+}
+
+.qr-ark {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.qr-lapp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: #fff;
+  color: #19100e;
+  border: 1px solid #ccc;
+  border-top: 8px solid #a8332f;
+  border-radius: 12px;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.qr-merke {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: #6b625b;
+}
+
+.qr-nr {
+  font-family: var(--font-dot);
+  font-size: 26px;
+  color: #004169;
+}
+
+.qr-kode {
+  width: 170px;
+  height: 170px;
+}
+
+.qr-kode svg {
+  width: 100%;
+  height: 100%;
+}
+
+.qr-navn {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.qr-sted,
+.qr-hint {
+  font-size: 11.5px;
+  color: #6b625b;
+}
+
+@media print {
+  .topbar,
+  .editbar,
+  .ikke-utskrift {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  body.redigerer::after {
+    display: none;
+  }
+  .qr-side {
+    padding: 0;
+  }
+  .qr-ark {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1000px) {
+  .pr-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-panel {
+    position: static;
+    max-height: none;
+  }
+}
