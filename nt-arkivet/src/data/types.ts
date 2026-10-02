@@ -1,3 +1,5 @@
+import type { Prosjekt } from '../prosess/types';
+
 /* Datamodellen for NT-Arkivet.
    Alt som lagres er rene JSON-objekter, slik at samme data kan ligge i
    nettleseren, i en fil på serveren eller i SharePoint senere. */
@@ -82,6 +84,7 @@ export interface Database {
   kort: Kort[];
   brukere: Bruker[];
   revisjoner: Revisjon[];
+  prosjekter: Prosjekt[];
   /** SHA-256 av PIN-koden for redigeringsmodus. Ikke ekte sikkerhet — hindrer uhell. */
   pinHash?: string;
 }

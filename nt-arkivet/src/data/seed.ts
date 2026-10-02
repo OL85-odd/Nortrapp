@@ -101,7 +101,7 @@ const KORT: Kort[] = [
 ];
 
 export const SEED: Database = {
-  skjema: 3,
+  skjema: 4,
   oppdatert: '2026-10-02',
   brukere: [
     { id: 'b-ol', initialer: 'OL', navn: 'Odd' },
@@ -109,6 +109,7 @@ export const SEED: Database = {
     { id: 'b-sa', initialer: 'SA', navn: 'Simen' },
   ],
   kort: KORT,
+  prosjekter: [],
   revisjoner: [
     {
       nr: 1,

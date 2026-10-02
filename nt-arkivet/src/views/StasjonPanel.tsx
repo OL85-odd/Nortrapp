@@ -1,6 +1,9 @@
 import { useEffect } from 'preact/hooks';
 import type { Kort, Stasjon } from '../data/types';
 import { fargeVar } from '../data/types';
+import { db } from '../data/store';
+import { opprett, PROSESSER } from '../prosess/prosjekter';
+import { modus } from '../ui/settings';
 
 interface Props {
   kort: Kort;
@@ -17,7 +20,14 @@ export function StasjonPanel({ kort, stasjon, onLukk }: Props) {
   }, [onLukk]);
 
   const underArbeid = stasjon.status === 'under_arbeid';
-  const erStaircon = stasjon.id === 'staircon';
+  const prosess = PROSESSER[stasjon.id];
+  const aktive = prosess ? db.value.prosjekter.filter((p) => p.prosessId === prosess.id && p.type === 'prosjekt' && !p.ferdig).length : 0;
+
+  const ov = async () => {
+    const p = await opprett({ prosessId: prosess.id, type: 'ovelse', nummer: 'Øving ' + new Date().toLocaleDateString('nb-NO') });
+    modus.value = 'opplaring';
+    location.hash = `#/prosjekt/${p.id}`;
+  };
 
   return (
     <aside class="panel card" aria-labelledby="panel-tittel">
@@ -53,23 +63,24 @@ export function StasjonPanel({ kort, stasjon, onLukk }: Props) {
         </div>
       )}
 
-      {underArbeid ? (
+      {prosess ? (
+        <div class="panel-handlinger">
+          <a class="btn btn-primary" href={`#/p/${stasjon.id}`}>
+            Åpne {prosess.navn} {aktive ? `· ${aktive} aktive` : ''}
+          </a>
+          <button class="btn" onClick={ov}>
+            Opplæring
+          </button>
+        </div>
+      ) : underArbeid ? (
         <div class="panel-tom">
           <strong>Ingen prosedyre ennå</strong>
           Denne stasjonen fylles med innhold i redigeringsmodus.
         </div>
       ) : (
         <div class="panel-handlinger">
-          {erStaircon && (
-            <button class="btn btn-primary" disabled title="Kommer i M2">
-              Start nytt prosjekt
-            </button>
-          )}
           <button class="btn" disabled title="Kommer med prosedyrebiblioteket">
             Åpne prosedyre
-          </button>
-          <button class="btn" disabled title="Kommer i M2">
-            Opplæring
           </button>
         </div>
       )}

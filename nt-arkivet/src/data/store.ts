@@ -91,6 +91,10 @@ export function migrer(d: Gammel): Database {
       revisjoner: [{ nr: 1, dato: new Date().toISOString(), brukerId: null, kommentar: 'Første versjon av kartet.', endringer: [], kort }],
     };
   }
+  if (d.skjema < 4) {
+    // v4: prosjekter (Staircon-løp) lagres i databasen.
+    d = { ...d, skjema: 4, prosjekter: d.prosjekter ?? [] };
+  }
   return d as Database;
 }
 

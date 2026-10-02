@@ -1,0 +1,1109 @@
+/* ── Arbeidsflate (prosjektliste) ─────────────────────────── */
+
+.arbeidsflate,
+.prosjekt {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.af-hode {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 28px;
+  border-top: 4px solid var(--linje, var(--accent));
+}
+
+.af-hode > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.af-tittel {
+  font-size: clamp(40px, 7vw, 68px);
+  line-height: 1;
+}
+
+.af-tekst {
+  max-width: 60ch;
+  margin: 4px 0 0;
+  color: var(--text-soft);
+}
+
+.af-knapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.af-seksjon {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.af-seksjon-tittel {
+  margin: 8px 4px 0;
+}
+
+.af-tom {
+  margin: 0;
+  padding: 20px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-m);
+  color: var(--text-soft);
+}
+
+.af-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.pk {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  text-align: left;
+  border-radius: var(--radius-l);
+}
+
+.pk:hover {
+  border-color: var(--accent);
+}
+
+.pk-topp {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pk-nummer {
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.pk-prosent {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.pk-kunde {
+  font-weight: 600;
+}
+
+.pk-oppsett,
+.pk-sist {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.pk-neste {
+  font-size: 10.5px;
+}
+
+/* Fremdriftsstolpe, brukes i liste og hode */
+.ph-bar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  background: repeating-linear-gradient(90deg, var(--line-strong) 0 4px, transparent 4px 7px);
+  overflow: hidden;
+}
+
+.ph-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(var(--andel, 0));
+  background: var(--accent);
+  border-radius: 99px;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ── Prosjekthode ──────────────────────────────────────────── */
+
+.prosjekt-hode {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 24px 28px;
+}
+
+.ph-venstre {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ph-nummer {
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.ph-kunde {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.ph-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip.fare {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.ph-hoyre {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ph-fremdrift {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.ph-prosent {
+  font-size: 56px;
+  line-height: 1;
+}
+
+/* ── Fasestripe ────────────────────────────────────────────── */
+
+.fasestripe {
+  position: relative;
+  padding: 18px 20px 14px;
+  overflow-x: auto;
+}
+
+.fasestripe ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  min-width: max-content;
+}
+
+.fase {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.fase-spor {
+  position: relative;
+  width: 36px;
+  height: 6px;
+  margin-top: 9px;
+  border-radius: 99px;
+  background: var(--track-idle);
+  overflow: hidden;
+}
+
+/* Sporet inn til en fase fylles når fasen er påbegynt */
+.fase.ferdig .fase-spor,
+.fase.aktiv .fase-spor,
+.fase.paabegynt .fase-spor {
+  background: var(--accent);
+}
+
+.fase.skjult .fase-spor {
+  background: repeating-linear-gradient(90deg, var(--track-idle) 0 3px, transparent 3px 7px);
+}
+
+.fase-knapp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 104px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.fase-punkt {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid var(--track-idle);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-text);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.fase.paabegynt .fase-punkt {
+  border-color: var(--accent);
+  background: conic-gradient(var(--accent) calc(var(--andel) * 360deg), var(--surface) 0);
+}
+
+.fase.ferdig .fase-punkt {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.fase.aktiv .fase-punkt {
+  border-color: var(--accent);
+  background: conic-gradient(var(--accent) calc(var(--andel) * 360deg), var(--surface) 0);
+  box-shadow: 0 0 0 0 var(--accent);
+  animation: fase-puls 1.8s ease-out infinite;
+}
+
+@keyframes fase-puls {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+.fase.skjult .fase-punkt {
+  border-style: dashed;
+  color: var(--text-faint);
+}
+
+.fase-navn {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--text-soft);
+}
+
+.fase.aktiv .fase-navn {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.fase-teller {
+  font-size: 9.5px;
+}
+
+/* ── Hovedområde ───────────────────────────────────────────── */
+
+.prosjekt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--gap);
+  align-items: start;
+}
+
+.prosjekt-hoved {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.ferdig-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  border-color: var(--ok);
+}
+
+.ferdig-banner .dot {
+  font-size: 22px;
+  color: var(--ok);
+}
+
+/* ── Steg i opplæring ──────────────────────────────────────── */
+
+.steg-kort {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: steg-inn 0.25s ease-out;
+}
+
+@keyframes steg-inn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.sk-topp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.steg-tittel {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.steg-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.steg-nav .btn-primary {
+  margin-left: auto;
+  padding: 11px 22px;
+}
+
+/* ── Stegets innhold ───────────────────────────────────────── */
+
+.steg-innhold {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.steg-innhold.kompakt {
+  padding: 4px 0 14px 34px;
+  gap: 10px;
+}
+
+.steg-tekst {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.6;
+  max-width: 70ch;
+}
+
+.kompakt .steg-tekst {
+  font-size: 14.5px;
+}
+
+.merknad {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-s);
+  border: 1px dashed var(--secondary);
+  background: var(--secondary-soft);
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.merknad .label {
+  color: var(--secondary);
+  font-weight: 700;
+}
+
+.husk {
+  padding: 12px 16px;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  background: var(--accent-soft);
+  max-width: 70ch;
+}
+
+.husk .label {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.husk p {
+  margin: 4px 0 0;
+}
+
+.verdier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.verdier div {
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+}
+
+.verdier dd {
+  margin: 4px 0 0;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.kompakt .verdier dd {
+  font-size: 16px;
+}
+
+.steg-taster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.taster {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 24px;
+  padding: 3px 7px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.bilder {
+  display: grid;
+  gap: 12px;
+}
+
+.bilder.antall-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kompakt .bilder {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.bilder figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bilde-knapp {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: #fff;
+  cursor: zoom-in;
+}
+
+.bilde-knapp img {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+}
+
+.kompakt .bilde-knapp img {
+  max-height: 160px;
+}
+
+.bilder figcaption {
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.hjelp {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  font-size: 14px;
+}
+
+.hjelp summary {
+  cursor: pointer;
+  color: var(--text-soft);
+}
+
+.hjelp p {
+  margin: 8px 0 0;
+}
+
+.farger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.farger li {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.farge-lapp {
+  flex: none;
+  width: 22px;
+  height: 30px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.farger p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.notat-knapp {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.notat-knapp:hover {
+  color: var(--text);
+}
+
+/* ── Valg ──────────────────────────────────────────────────── */
+
+.valg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.valg-knapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.valg-knapp,
+.valg-alt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  text-align: left;
+  font-size: 15.5px;
+  font-weight: 600;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.valg-knapp:hover,
+.valg-alt:hover {
+  border-color: var(--accent);
+}
+
+.valg-knapp[aria-pressed='true'],
+.valg-alt[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.valg-knapp[aria-pressed='true'] kbd,
+.valg-alt[aria-pressed='true'] kbd {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.valg-alternativer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.valg-alt-tekst {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.valg-alt-tekst span {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+.valg-folge {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  animation: steg-inn 0.2s ease-out;
+}
+
+.kompakt .valg-knapp,
+.kompakt .valg-alt {
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+/* ── Hurtigtastpanel ───────────────────────────────────────── */
+
+.hurtigtaster {
+  position: sticky;
+  top: calc(var(--topbar-h) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  max-height: calc(100vh - var(--topbar-h) - 32px);
+  overflow: auto;
+}
+
+body.redigerer .hurtigtaster {
+  top: calc(var(--topbar-h) + 64px);
+}
+
+.ht-tittel {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.ht-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ht-rad {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.ht-rad.viktig {
+  padding: 8px;
+  border-radius: var(--radius-s);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.ht-egen {
+  font-style: normal;
+  color: var(--warn);
+  font-size: 11.5px;
+}
+
+.ht-tom {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ── Produksjon: sjekkliste ────────────────────────────────── */
+
+.sjekkliste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sl-fase {
+  padding: 4px 8px;
+}
+
+.sl-fase.ferdig {
+  opacity: 0.75;
+}
+
+.sl-fase-hode {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.sl-fase-navn {
+  flex: 1;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.sl-steg {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px;
+}
+
+.sl-rad {
+  border-top: 1px solid var(--line);
+}
+
+.sl-rad.aktiv {
+  background: var(--accent-soft);
+  border-radius: var(--radius-s);
+}
+
+.sl-linje {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+}
+
+.sl-linje input[type='checkbox'] {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.sl-tittel {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font-size: 14.5px;
+}
+
+.sl-rad.ferdig .sl-tittel {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+
+.sl-husk {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.sl-verdi {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.sl-meta kbd {
+  font-size: 10px;
+}
+
+/* ── Oversikt: hele stien + logg ───────────────────────────── */
+
+.oversikt-modus {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.stikart {
+  padding: 22px;
+}
+
+.sk-fase {
+  position: relative;
+  padding-left: 6px;
+}
+
+.sk-fase-navn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.sk-fase-punkt {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 4px solid var(--accent);
+  background: var(--surface);
+}
+
+.sk-steg {
+  list-style: none;
+  margin: 0 0 12px 14px;
+  padding: 2px 0 2px 0;
+  border-left: 4px solid var(--track-idle);
+}
+
+.sk-rad button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 5px 0 5px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.sk-punkt {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-left: -8px;
+  border-radius: 50%;
+  border: 2px solid var(--text-faint);
+  background: var(--surface);
+}
+
+.sk-rad.ferdig .sk-punkt {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.sk-rad.aktiv .sk-punkt {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.sk-rad.kommende .sk-tittel {
+  color: var(--text-soft);
+}
+
+.sk-tid {
+  margin-left: auto;
+  font-size: 10px;
+}
+
+.sk-forlatt {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-m);
+}
+
+.sk-forlatt p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.logg {
+  padding: 22px;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.logg ol {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.logg-rad {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 2px solid var(--line-strong);
+  font-size: 13.5px;
+}
+
+.logg-rad.svar,
+.logg-rad.omgjort {
+  border-left-color: var(--accent);
+}
+
+.logg-rad .label {
+  font-size: 10px;
+}
+
+.farlig-sone {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Tilbud ────────────────────────────────────────────────── */
+
+.tilbud {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tilbud-felt,
+.tilbud-omgjor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.tilbud-felt .felt,
+.tilbud-omgjor .felt {
+  flex: 1 1 240px;
+  width: auto;
+}
+
+.ny-skjema {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Lightbox ──────────────────────────────────────────────── */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 10, 12, 0.88);
+  cursor: zoom-out;
+}
+
+.lightbox figure {
+  margin: 0;
+  max-width: min(1400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: default;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 84vh;
+  object-fit: contain;
+  border-radius: var(--radius-m);
+  background: #fff;
+}
+
+.lightbox figcaption {
+  color: #ecebe6;
+  text-align: center;
+}
+
+.lightbox-lukk {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  color: #ecebe6;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Smale skjermer ────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .prosjekt-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hurtigtaster {
+    position: static;
+    max-height: none;
+  }
+  .oversikt-modus {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .arbeidsflate,
+  .prosjekt {
+    padding: 16px;
+  }
+  .prosjekt-hode,
+  .af-hode,
+  .steg-kort {
+    padding: 20px;
+  }
+  .ph-hoyre,
+  .ph-fremdrift {
+    align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+  .ph-prosent {
+    font-size: 40px;
+  }
+  .bilder.antall-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sl-meta {
+    display: none;
+  }
+  .steg-innhold.kompakt {
+    padding-left: 0;
+  }
+}

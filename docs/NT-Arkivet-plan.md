@@ -251,7 +251,7 @@ Dette skal rettes eller avklares:
 | # | Leveranse | Ferdig når |
 |---|---|---|
 | M1 ✅ | Rammeverk, designsystem (lys/mørk), T-banekart for hele Nortrapp | Kartet vises med alle linjer, og grå stasjoner er klikkbare |
-| M2 | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
+| M2 ✅ | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
 | M3 | Endringslogg med «må kontrolleres», valghistorikk, tid/pause/avbrudd, rapport, tilbud | Rapporten viser endringer og tid |
 | M4 | Dokumentimport: pdf.js + OCR + redigerbart regelbibliotek | Eksempeldokumentene gir riktige felt |
 | M5 | Prosedyrebibliotek med QR, revisjoner, intervall/kvittering, 2–3 eksempler | QR-lapp kan skrives ut |

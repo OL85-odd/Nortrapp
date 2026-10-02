@@ -111,5 +111,6 @@ describe('migrering', () => {
     expect(navn(d.kort, 'maskiner')).toEqual(['CNC-fres']);
     expect(navn(d.kort, 'fasiliteter')).toEqual(['Kaffemaskin']);
     expect(d.revisjoner).toHaveLength(1);
+    expect(d.prosjekter).toEqual([]);
   });
 });

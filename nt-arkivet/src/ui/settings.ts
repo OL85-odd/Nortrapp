@@ -36,6 +36,11 @@ effect(() => {
 
 effect(() => skriv('nt-bruker', bruker.value));
 
+/** Visning i prosjekter: opplæring (ett steg, full forklaring), produksjon (kompakt sjekkliste) eller oversikt (hele stien). */
+export type Modus = 'opplaring' | 'produksjon' | 'oversikt';
+export const modus = signal<Modus>((les('nt-modus') as Modus) || 'opplaring');
+effect(() => skriv('nt-modus', modus.value));
+
 /** Er mørk modus aktiv akkurat nå (inkludert «auto»)? */
 export function erMork(): boolean {
   if (tema.value === 'mork') return true;
