@@ -1,0 +1,94 @@
+.modal-bakgrunn {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.modal {
+  width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal.bred {
+  width: min(680px, 100%);
+}
+
+.modal-topp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 32px;
+}
+
+.modal-tittel {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.modal p {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.modal-knapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.feil {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+/* ── Skjemafelt (brukes i dialoger og redigeringspanel) ───── */
+
+.felt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.felt > span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.felt input,
+.felt textarea,
+.felt select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+}
+
+.felt textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.pin-felt {
+  font-family: var(--font-dot);
+  font-size: 30px !important;
+  letter-spacing: 0.4em;
+  text-align: center;
+}

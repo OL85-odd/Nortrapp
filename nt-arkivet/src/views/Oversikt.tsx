@@ -1,37 +1,74 @@
-import type { Linje, Stasjon } from '../data/types';
-import { db } from '../data/store';
+import type { Kort, Stasjon } from '../data/types';
+import { fargeVar } from '../data/types';
+import { alleStasjoner, nyId } from '../data/store';
 import { MetroMap } from '../map/MetroMap';
+import { Samling } from '../map/Samling';
 import { StasjonPanel } from './StasjonPanel';
+import { StasjonEditor } from '../edit/StasjonEditor';
+import { KortEditor } from '../edit/KortEditor';
+import * as op from '../edit/ops';
+import { endre, redigerer, synligeKort } from '../edit/state';
+import type { Rute } from '../app';
 import './oversikt.css';
 
-/** Alle stasjoner på en linje, inkludert grener. */
-function alleStasjoner(linje: Linje): Stasjon[] {
-  return linje.stasjoner.flatMap((s) => [s, ...(s.grener ?? [])]);
-}
-
-export function finnStasjon(id: string | null): { linje: Linje; stasjon: Stasjon } | null {
+export function finnStasjon(kort: Kort[], id: string | null): { kort: Kort; stasjon: Stasjon } | null {
   if (!id) return null;
-  for (const linje of db.value.linjer) {
-    const stasjon = alleStasjoner(linje).find((s) => s.id === id);
-    if (stasjon) return { linje, stasjon };
+  for (const k of kort) {
+    const stasjon = alleStasjoner(k).find((s) => s.id === id);
+    if (stasjon) return { kort: k, stasjon };
   }
   return null;
 }
 
-export function Oversikt({ valgt, onVelg }: { valgt: string | null; onVelg: (id: string | null) => void }) {
-  const linjer = db.value.linjer;
-  const alle = linjer.flatMap(alleStasjoner);
+interface Props {
+  rute: Rute;
+  onNaviger: (r: Rute) => void;
+}
+
+export function Oversikt({ rute, onNaviger }: Props) {
+  const kort = synligeKort.value;
+  const rediger = redigerer.value;
+  const linjer = kort.filter((k) => k.type === 'linje');
+  const alle = kort.flatMap(alleStasjoner);
   const aktive = alle.filter((s) => s.status === 'aktiv').length;
-  const treff = finnStasjon(valgt);
+
+  const valgtStasjon = rute.type === 's' ? rute.id : null;
+  const treff = finnStasjon(kort, valgtStasjon);
+  const kortSomRedigeres = rediger && rute.type === 'k' ? rute.id : null;
+
+  const velg = (id: string | null) => onNaviger(id ? { type: 's', id } : { type: 'hjem' });
+  const veksle = (id: string) => velg(id === valgtStasjon ? null : id);
+  const lukk = () => onNaviger({ type: 'hjem' });
+
+  const nyIKort = (k: Kort, indeks: number) => {
+    const id = nyId('s');
+    endre((alleKort) => op.settInn(alleKort, k.id, indeks, { id, navn: k.type === 'linje' ? 'Ny stasjon' : 'Ny oppgave', status: 'under_arbeid' }));
+    velg(id);
+  };
+
+  const nyttKort = (type: 'linje' | 'samling') => {
+    const id = nyId('k');
+    endre((alleKort) => op.leggTilKort(alleKort, op.nyttKort(id, type)));
+    onNaviger({ type: 'k', id });
+  };
+
+  let panel = null;
+  if (kortSomRedigeres) {
+    panel = <KortEditor key={kortSomRedigeres} kortId={kortSomRedigeres} onVelgStasjon={velg} onLukk={lukk} />;
+  } else if (treff && rediger) {
+    panel = <StasjonEditor key={treff.stasjon.id} stasjonId={treff.stasjon.id} onVelg={velg} onLukk={lukk} />;
+  } else if (treff) {
+    panel = <StasjonPanel kort={treff.kort} stasjon={treff.stasjon} onLukk={lukk} />;
+  }
 
   return (
-    <main class={`oversikt ${treff ? 'med-panel' : ''}`}>
+    <main class={`oversikt ${panel ? 'med-panel' : ''}`}>
       <section class="oversikt-hode card">
         <div>
           <span class="label">Nortrapp · prosesser og prosedyrer</span>
           <h1 class="dot oversikt-tittel">NT-Arkivet</h1>
           <p class="oversikt-ingress">
-            Hele Nortrapp som et linjekart. Velg en stasjon for å se prosedyren, lære den eller starte et prosjekt.
+            Hele Nortrapp som linjer og samlinger. Velg en stasjon for å se prosedyren, lære den eller starte et prosjekt.
           </p>
         </div>
         <dl class="tall">
@@ -40,8 +77,8 @@ export function Oversikt({ valgt, onVelg }: { valgt: string | null; onVelg: (id:
             <dd class="dot">{linjer.length}</dd>
           </div>
           <div>
-            <dt class="label">Stasjoner</dt>
-            <dd class="dot">{alle.length}</dd>
+            <dt class="label">Samlinger</dt>
+            <dd class="dot">{kort.length - linjer.length}</dd>
           </div>
           <div>
             <dt class="label">Med innhold</dt>
@@ -56,20 +93,56 @@ export function Oversikt({ valgt, onVelg }: { valgt: string | null; onVelg: (id:
 
       <div class="oversikt-innhold">
         <div class="linjer">
-          {linjer.map((l) => (
-            <section key={l.id} class="linje card" aria-labelledby={`linje-${l.id}`}>
+          {kort.map((k) => (
+            <section
+              key={k.id}
+              class={`linje card ${kortSomRedigeres === k.id ? 'redigeres' : ''}`}
+              aria-labelledby={`kort-${k.id}`}
+              style={{ '--linje': fargeVar(k.farge) }}
+            >
               <header class="linje-hode">
-                <span class="linje-kode dot" style={{ background: l.farge }}>
-                  {l.kode}
+                <span class={`linje-kode kode-${k.type}`} style={{ background: fargeVar(k.farge) }}>
+                  {k.kode}
                 </span>
                 <div>
-                  <h2 id={`linje-${l.id}`}>{l.navn}</h2>
-                  {l.beskrivelse && <p>{l.beskrivelse}</p>}
+                  <h2 id={`kort-${k.id}`}>{k.navn}</h2>
+                  {k.beskrivelse && <p>{k.beskrivelse}</p>}
                 </div>
+                {rediger && (
+                  <button class="btn liten linje-rediger" onClick={() => onNaviger({ type: 'k', id: k.id })}>
+                    ✎ Rediger
+                  </button>
+                )}
               </header>
-              <MetroMap linje={l} valgt={valgt} onVelg={(id) => onVelg(id === valgt ? null : id)} />
+
+              {k.type === 'samling' ? (
+                <Samling kort={k} valgt={valgtStasjon} onVelg={veksle} rediger={rediger} onNy={() => nyIKort(k, k.stasjoner.length)} />
+              ) : k.stasjoner.length ? (
+                <MetroMap linje={k} valgt={valgtStasjon} onVelg={veksle} rediger={rediger} onSettInn={(i) => nyIKort(k, i)} />
+              ) : (
+                <div class="tom-linje">
+                  <span class="label">Tom linje</span>
+                  {rediger && (
+                    <button class="btn liten" onClick={() => nyIKort(k, 0)}>
+                      + Første stasjon
+                    </button>
+                  )}
+                </div>
+              )}
             </section>
           ))}
+
+          {rediger && (
+            <div class="nytt-kort">
+              <span class="label">Nytt kort</span>
+              <button class="btn" onClick={() => nyttKort('linje')}>
+                + Linje
+              </button>
+              <button class="btn" onClick={() => nyttKort('samling')}>
+                + Samling
+              </button>
+            </div>
+          )}
 
           <p class="forklaring label">
             <span class="fk-punkt" /> Med innhold
@@ -77,7 +150,7 @@ export function Oversikt({ valgt, onVelg }: { valgt: string | null; onVelg: (id:
           </p>
         </div>
 
-        {treff && <StasjonPanel linje={treff.linje} stasjon={treff.stasjon} onLukk={() => onVelg(null)} />}
+        {panel}
       </div>
     </main>
   );

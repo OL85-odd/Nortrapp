@@ -12,6 +12,7 @@ npm run dev        # utvikling med automatisk oppdatering, http://localhost:5173
 npm run build      # typekontroll + ferdig bygg i dist/
 npm run preview    # test det ferdige bygget lokalt
 npm run build:fil  # én HTML-fil i dist-fil/ som kan åpnes med dobbeltklikk
+npm test           # tester for redigering, endringslogg og migrering
 ```
 
 `dist-fil/index.html` er hele appen i én fil (fonter og logo bakt inn). Den
@@ -27,7 +28,8 @@ bygget. Den trenger ikke internett, og fontene er inkludert.
 | `src/theme/` | Designtokens (farger og fonter for lys og mørk modus) og grunnstiler |
 | `src/data/` | Datamodell (`types.ts`), startinnhold (`seed.ts`) og lagring (`store.ts`) |
 | `src/map/` | T-banekartet: `layout.ts` regner ut posisjoner, `MetroMap.tsx` tegner |
-| `src/ui/` | Toppfelt, temavalg og velger for initialer |
+| `src/ui/` | Toppfelt, temavalg, velger for initialer og felles dialog |
+| `src/edit/` | Redigeringsmodus: operasjoner (`ops.ts`), utkast/PIN/publisering (`state.ts`), paneler og dialoger |
 | `src/views/` | Sider: oversikt og stasjonspanel |
 
 Data lagres foreløpig i nettleseren. `store.ts` har et `Lager`-grensesnitt,

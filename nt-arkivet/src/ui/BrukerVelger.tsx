@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { db, nyId, oppdater } from '../data/store';
 import type { Bruker } from '../data/types';
 import { bruker } from './settings';
+import { redigerer } from '../edit/state';
 import './brukervelger.css';
 
 /* Enkel identifisering i prototypen: velg initialene dine.
@@ -64,9 +65,13 @@ function Velg({ onFerdig, onAdministrer }: { onFerdig: () => void; onAdministrer
 
       <NyBruker onLagtTil={velg} />
 
-      <button class="velger-lenke" onClick={onAdministrer}>
-        Administrer brukere →
-      </button>
+      {redigerer.value ? (
+        <button class="velger-lenke" onClick={onAdministrer}>
+          Administrer brukere →
+        </button>
+      ) : (
+        <p class="velger-hint">Lås opp redigering (hengelåsen) for å endre, arkivere eller slette brukere.</p>
+      )}
     </>
   );
 }

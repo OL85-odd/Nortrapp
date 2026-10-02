@@ -44,8 +44,12 @@ Kunde tar kontakt → Tilbud → Ordrebekreftelse → Produksjonsordre (Kalken)
   → Produksjon → Pakking → Levering → Montering → Oppfølging/vedlikehold → Ettermarked
 ```
 
-**Sidelinjer:** Maskiner og vedlikehold · HMS · Administrasjon.
-Linjer og stasjoner kan legges til, fjernes og flyttes i redigeringsmodus.
+**To typer kort:**
+- **Linje** – en prosess der rekkefølgen betyr noe. Tegnes som T-banekart (rundt merke).
+- **Samling** – rutiner og oppgaver i organisasjonen uten fast rekkefølge. Vises som
+  fliser (firkantet merke). Start: Produksjonsmaskiner · Fasiliteter · HMS · Administrasjon.
+
+Kort, stasjoner og fliser kan legges til, endres, flyttes og slettes i redigeringsmodus.
 Stasjoner uten innhold vises som grå «under arbeid».
 
 Forgreninger vises som sidespor. Valgt sti lyser i Nortrapp-rød, bortvalgte
@@ -246,17 +250,37 @@ Dette skal rettes eller avklares:
 
 | # | Leveranse | Ferdig når |
 |---|---|---|
-| M1 | Rammeverk, designsystem (lys/mørk), T-banekart for hele Nortrapp | Kartet vises med alle linjer, og grå stasjoner er klikkbare |
+| M1 ✅ | Rammeverk, designsystem (lys/mørk), T-banekart for hele Nortrapp | Kartet vises med alle linjer, og grå stasjoner er klikkbare |
 | M2 | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
 | M3 | Endringslogg med «må kontrolleres», valghistorikk, tid/pause/avbrudd, rapport, tilbud | Rapporten viser endringer og tid |
 | M4 | Dokumentimport: pdf.js + OCR + redigerbart regelbibliotek | Eksempeldokumentene gir riktige felt |
 | M5 | Prosedyrebibliotek med QR, revisjoner, intervall/kvittering, 2–3 eksempler | QR-lapp kan skrives ut |
-| M6 | Redigeringsmodus (PIN) for linjer, stasjoner, steg, valg og regler | Et nytt steg kan legges til uten kode |
+| M6a ✅ | Redigeringsmodus (PIN) for kort, linjer, samlinger og stasjoner: utkast, angre, publisering med kommentar, historikk og tilbakestilling | Kartet kan bygges om uten kode |
+| M6b | Redigering av innholdet i prosedyrer: steg, valg og regler | Et nytt steg kan legges til uten kode |
 
 **Ikke med nå:** SharePoint, ekte innlogging, AI-tjenester, integrasjon med den
 nye kalkulasjonsappen (vurderes når den finnes). Brukere velger initialer ved oppstart.
 
-## 11. Åpne punkter
+## 11. Drift på serveren
+
+Verken Git eller Next.js trengs for å drifte. Git er bare for kildekoden.
+I bunn ligger ett lite program på serveren (Windows, driftes av IT-konsulent,
+Nortrapp har admin-tilgang). Det serverer appen og lagrer i en lesbar mappestruktur:
+
+```
+NT-Arkivet\
+  app\                       ← selve nettsiden
+  data\
+    kart.json                 ← kort, stasjoner og revisjoner
+    brukere.json
+    prosedyrer\NT-014\        ← prosedyre.json, bilder\, revisjoner\
+    prosjekter\2026\H483-26\  ← prosjekt.json, logg.txt, dokumenter\
+  backup\                    ← automatisk kopi hver natt
+```
+
+Programmet leveres som én `.exe` som kjører som Windows-tjeneste.
+
+## 12. Åpne punkter
 
 1. **Server:** ✅ Avklart. Nortrapp har en server i bygget som alle når. Vi utvikler
    og tester lokalt først, og flytter dit når appen er klar.

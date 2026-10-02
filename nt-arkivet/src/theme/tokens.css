@@ -44,6 +44,16 @@
   --warn: #b07a12;
   --track-idle: rgba(25, 16, 14, 0.2);
   --shadow: 0 1px 0 rgba(25, 16, 14, 0.04), 0 8px 24px rgba(25, 16, 14, 0.06);
+
+  /* Kortfarger (linjer og samlinger) */
+  --k-rod: var(--accent);
+  --k-bla: var(--secondary);
+  --k-gul: #b8860b;
+  --k-gronn: #2f7a4f;
+  --k-lilla: #6b4fa0;
+  --k-oransje: #c4621d;
+  --k-turkis: #1f7f86;
+  --k-gra: #6b625b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -67,6 +77,13 @@
     --warn: #e0b04a;
     --track-idle: rgba(255, 255, 255, 0.16);
     --shadow: none;
+
+    --k-gul: #e0b04a;
+    --k-gronn: #6cc08e;
+    --k-lilla: #a891e0;
+    --k-oransje: #e8925e;
+    --k-turkis: #5fc0c4;
+    --k-gra: #a8a6a0;
   }
 }
 
@@ -90,4 +107,11 @@
   --warn: #e0b04a;
   --track-idle: rgba(255, 255, 255, 0.16);
   --shadow: none;
+
+  --k-gul: #e0b04a;
+  --k-gronn: #6cc08e;
+  --k-lilla: #a891e0;
+  --k-oransje: #e8925e;
+  --k-turkis: #5fc0c4;
+  --k-gra: #a8a6a0;
 }

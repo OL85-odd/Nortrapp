@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { bruker, erMork, tema, type Tema } from './settings';
 import { db } from '../data/store';
+import { redigerer } from '../edit/state';
 import logoHvit from '../assets/logo-hvit.png';
 import logoFarge from '../assets/logo-farge.png';
 import './topbar.css';
@@ -32,7 +33,7 @@ function useMorkModus() {
   return mork;
 }
 
-export function TopBar({ onByttBruker }: { onByttBruker: () => void }) {
+export function TopBar({ onByttBruker, onRediger }: { onByttBruker: () => void; onRediger: () => void }) {
   const na = useKlokke();
   const mork = useMorkModus();
   const tid = na.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
@@ -59,6 +60,18 @@ export function TopBar({ onByttBruker }: { onByttBruker: () => void }) {
             </button>
           ))}
         </div>
+        <button
+          class={`las-knapp ${redigerer.value ? 'apen' : ''}`}
+          onClick={onRediger}
+          aria-pressed={redigerer.value}
+          title={redigerer.value ? 'Lås (avslutt redigering)' : 'Rediger kartet (krever PIN)'}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path d={redigerer.value ? 'M8 11V7a4 4 0 0 1 7.5-2' : 'M8 11V7a4 4 0 0 1 8 0v4'} />
+          </svg>
+          <span class="visually-hidden">{redigerer.value ? 'Lås' : 'Rediger'}</span>
+        </button>
         <button class="bruker-knapp dot" onClick={onByttBruker} title={meg ? `${meg.navn} – bytt bruker` : 'Velg bruker'}>
           {meg?.initialer ?? '--'}
         </button>

@@ -28,7 +28,9 @@
 
 .merke text {
   fill: var(--bg);
-  font-size: 16px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
   text-anchor: middle;
 }
 
@@ -105,4 +107,37 @@
 
 .stasjon.valgt .etikett {
   font-weight: 700;
+}
+
+/* ── Redigeringsmodus: +-punkter ──────────────────────────── */
+
+.pluss {
+  cursor: pointer;
+  outline: none;
+}
+
+.pluss circle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  transition: r 0.15s ease;
+}
+
+.pluss path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.pluss:hover circle,
+.pluss:focus-visible circle {
+  r: 13;
+  fill: var(--accent);
+  stroke-dasharray: none;
+}
+
+.pluss:hover path,
+.pluss:focus-visible path {
+  stroke: var(--accent-text);
 }

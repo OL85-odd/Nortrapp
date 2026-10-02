@@ -1,14 +1,15 @@
 import { useEffect } from 'preact/hooks';
-import type { Linje, Stasjon } from '../data/types';
+import type { Kort, Stasjon } from '../data/types';
+import { fargeVar } from '../data/types';
 
 interface Props {
-  linje: Linje;
+  kort: Kort;
   stasjon: Stasjon;
   onLukk: () => void;
 }
 
 /** Detaljer om valgt stasjon. Innholdet fylles ut i de neste milepælene. */
-export function StasjonPanel({ linje, stasjon, onLukk }: Props) {
+export function StasjonPanel({ kort, stasjon, onLukk }: Props) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onLukk();
     window.addEventListener('keydown', esc);
@@ -21,8 +22,8 @@ export function StasjonPanel({ linje, stasjon, onLukk }: Props) {
   return (
     <aside class="panel card" aria-labelledby="panel-tittel">
       <div class="panel-topp">
-        <span class="label" style={{ color: linje.farge }}>
-          {linje.kode} · {linje.navn}
+        <span class="label" style={{ color: fargeVar(kort.farge) }}>
+          {kort.kode} · {kort.navn}
         </span>
         <button class="panel-lukk" onClick={onLukk} aria-label="Lukk">
           ×
@@ -64,7 +65,7 @@ export function StasjonPanel({ linje, stasjon, onLukk }: Props) {
               Start nytt prosjekt
             </button>
           )}
-          <button class="btn" disabled title="Kommer i M5">
+          <button class="btn" disabled title="Kommer med prosedyrebiblioteket">
             Åpne prosedyre
           </button>
           <button class="btn" disabled title="Kommer i M2">

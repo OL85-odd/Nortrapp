@@ -62,6 +62,7 @@ function sKurve(x0: number, y0: number, x1: number, y1: number) {
 }
 
 export function lagLayout(linje: Linje, tilgjengeligBredde: number): Layout {
+  if (!linje.stasjoner.length) return { noder: [], kanter: [], bredde: 0, hoyde: 0, merke: null };
   return tilgjengeligBredde < 560 ? loddrett(linje) : slange(linje, tilgjengeligBredde);
 }
 

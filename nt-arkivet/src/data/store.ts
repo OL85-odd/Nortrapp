@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { Database } from './types';
+import type { Database, Farge, Kort, KortType, Stasjon } from './types';
 import { SEED } from './seed';
 
 /* ─────────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@ import { SEED } from './seed';
    ───────────────────────────────────────────────────────────── */
 
 export interface Lager {
-  hent(): Promise<Database | null>;
+  hent(): Promise<unknown | null>;
   lagre(db: Database): Promise<void>;
 }
 
@@ -20,7 +20,7 @@ export const nettleserLager: Lager = {
   async hent() {
     try {
       const raw = localStorage.getItem(NOKKEL);
-      return raw ? (JSON.parse(raw) as Database) : null;
+      return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
@@ -38,27 +38,71 @@ const lager: Lager = nettleserLager;
 
 export const db = signal<Database>(SEED);
 
-/* Oppgraderer data lagret med en eldre versjon av appen, så ingenting går tapt. */
-function migrer(d: Database): Database {
+/* ── Migrering ─────────────────────────────────────────────────
+   Oppgraderer data lagret med en eldre versjon av appen, så ingenting
+   går tapt. Hver blokk løfter dataene ett skjema opp. */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Gammel = any;
+
+const GAMLE_FARGER: Record<string, Farge> = {
+  'var(--accent)': 'rod',
+  'var(--secondary)': 'bla',
+  'var(--warn)': 'gul',
+  'var(--text-soft)': 'gra',
+};
+
+export function migrer(d: Gammel): Database {
   if (d.skjema < 2) {
     // v2: brukere får fast id, slik at initialer kan endres senere.
     d = {
       ...d,
       skjema: 2,
-      brukere: d.brukere.map((b) => ({ ...b, id: b.id ?? 'b-' + b.initialer.toLowerCase() })),
+      brukere: d.brukere.map((b: Gammel) => ({ ...b, id: b.id ?? 'b-' + b.initialer.toLowerCase() })),
     };
   }
-  return d;
+  if (d.skjema < 3) {
+    // v3: «linjer» blir «kort» med type (linje/samling) og faste farger.
+    //     Sidelinjene blir samlinger, og kaffemaskinen får egen samling.
+    let kort: Kort[] = (d.linjer ?? []).map(
+      (l: Gammel): Kort => ({
+        id: l.id,
+        type: (l.id === 'hoved' ? 'linje' : 'samling') as KortType,
+        navn: l.navn === 'Maskiner og vedlikehold' ? 'Produksjonsmaskiner' : l.navn,
+        kode: l.kode,
+        farge: GAMLE_FARGER[l.farge] ?? 'gra',
+        beskrivelse: l.beskrivelse,
+        stasjoner: l.stasjoner,
+      }),
+    );
+    const maskiner = kort.find((k) => k.id === 'maskiner');
+    const kaffe = maskiner?.stasjoner.find((s) => s.id === 'kaffemaskin');
+    if (maskiner && kaffe && !kort.some((k) => k.id === 'fasiliteter')) {
+      maskiner.stasjoner = maskiner.stasjoner.filter((s) => s !== kaffe);
+      const fasiliteter = SEED.kort.find((k) => k.id === 'fasiliteter')!;
+      const i = kort.indexOf(maskiner) + 1;
+      kort = [...kort.slice(0, i), { ...fasiliteter, stasjoner: [kaffe] }, ...kort.slice(i)];
+    }
+    d = {
+      skjema: 3,
+      oppdatert: d.oppdatert,
+      brukere: d.brukere,
+      kort,
+      revisjoner: [{ nr: 1, dato: new Date().toISOString(), brukerId: null, kommentar: 'Første versjon av kartet.', endringer: [], kort }],
+    };
+  }
+  return d as Database;
 }
 
 export async function lastInn() {
-  const lagret = await lager.hent();
+  const lagret = (await lager.hent()) as Gammel;
   if (!lagret) return;
   if (lagret.skjema > SEED.skjema) {
     console.warn('Data er laget med en nyere versjon av NT-Arkivet. Bruker startinnhold.');
     return;
   }
   db.value = migrer(lagret);
+  if (lagret.skjema !== SEED.skjema) await lager.lagre(db.value);
 }
 
 export function nyId(prefiks: string) {
@@ -69,6 +113,11 @@ export async function oppdater(endre: (d: Database) => Database) {
   const neste = { ...endre(db.value), oppdatert: new Date().toISOString().slice(0, 10) };
   db.value = neste;
   await lager.lagre(neste);
+}
+
+/** Alle stasjoner i et kort, inkludert grener. */
+export function alleStasjoner(k: Kort): Stasjon[] {
+  return k.stasjoner.flatMap((s) => [s, ...(s.grener ?? [])]);
 }
 
 /** Last ned hele databasen som fil (backup). */

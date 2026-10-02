@@ -85,13 +85,21 @@
 }
 
 .linje-kode {
+  flex: none;
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
   border-radius: 50%;
   color: var(--bg);
-  font-size: 18px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Samlinger får firkantet merke, linjer runde — som skilt i T-banen */
+.linje-kode.kode-samling {
+  border-radius: 9px;
 }
 
 .forklaring {
@@ -243,5 +251,16 @@
   .tall dt {
     font-size: 9.5px;
     letter-spacing: 0.08em;
+  }
+}
+
+/* Høye paneler ruller selv i stedet for å forsvinne under skjermkanten */
+@media (min-width: 1001px) {
+  .panel {
+    max-height: calc(100vh - var(--topbar-h) - 32px);
+    overflow: auto;
+  }
+  body.redigerer .panel {
+    max-height: calc(100vh - var(--topbar-h) - 80px);
   }
 }
