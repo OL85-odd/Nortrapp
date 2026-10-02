@@ -1,0 +1,195 @@
+# NT-Arkivet – plan
+
+> Status: **Til godkjenning** · Versjon 0.1 · 02.10.2026 · Eier: OL
+
+NT-Arkivet er Nortrapps interne system for prosesser, prosedyrer og opplæring.
+Det viser hele løpet fra «kunde tar kontakt» til ettermarked som et T-banekart,
+holder alle på samme standard, og lar nye ansatte læres opp steg for steg.
+
+Første leveranse er frittstående (ingen abonnement, ingen sky). Datalaget bygges
+slik at det kan flyttes til SharePoint senere uten å bygge om appen.
+
+---
+
+## 1. Begreper
+
+| Begrep | Hva det er | Eksempel |
+|---|---|---|
+| **Linje** | En bane i T-banekartet | Hovedlinjen, Maskiner, HMS, Administrasjon |
+| **Stasjon** | Et stopp på en linje. Peker til en prosedyre | «Tegning i Staircon» |
+| **Prosedyre** | Instruksjon med NT-nummer, revisjoner og QR-kode | NT-014 Dekktrinn-bestilling |
+| **Steg** | Én oppgave i en prosedyre | «Kjør F12 før du printer» |
+| **Valg** | Spørsmål som styrer resten av stien | Stusstrinn eller barnesikring? |
+| **Regel** | «Gjelder for» / «skjul hvis» – bestemmer hvilke steg som vises | Glass-steg bare når tillegget glass er valgt |
+| **Prosjekt** | En konkret trapp som kjøres gjennom linjen | H483-26 |
+| **Endring** | Loggført endring på et prosjekt, med dato, initialer og kommentar | «OL 02.10.26 – Vegar: endre bredde» |
+| **Revisjon** | Loggført endring på en prosedyre (innholdet) | Rev. 3 – presisert repo-kant |
+
+To typer innhold:
+
+- **Prosedyrer** – statiske instruksjoner (kaffemaskin, avsugsfilter, kantpresse).
+  Leses og følges. Kan ha intervall og kvittering.
+- **Prosjektløp** – en trapp som går gjennom linjen med avkrysning, valg, logg og tid.
+  Stasjonene på linjen *er* prosedyrene.
+
+## 2. Linjekartet
+
+**Hovedlinjen (rød):**
+
+```
+Kunde tar kontakt → Tilbud → Ordrebekreftelse → Produksjonsordre (Kalken)
+  → Tegning ─┬─ Staircon
+             ├─ Fusion 360
+             └─ FreeCAD
+  → Produksjon → Pakking → Levering → Montering → Oppfølging/vedlikehold → Ettermarked
+```
+
+**Sidelinjer:** Maskiner og vedlikehold · HMS · Administrasjon.
+Linjer og stasjoner kan legges til, fjernes og flyttes i redigeringsmodus.
+Stasjoner uten innhold vises som grå «under arbeid».
+
+Forgreninger vises som sidespor. Valgt sti lyser i Nortrapp-rød, bortvalgte
+grener blir grå prikker, og steg som må kontrolleres på nytt etter en endring får
+en egen markering.
+
+## 3. Moduser
+
+| Modus | For hvem | Innhold |
+|---|---|---|
+| **Oversikt** | Alle | T-banekartet, se at alle punkter er tatt |
+| **Produksjon** | Erfarne | Kompakt: tittel, verdier, hurtigtaster. Detaljer kan åpnes |
+| **Opplæring** | Nye | Ett steg om gangen med full forklaring, bilder og hjelpetekst |
+| **Redigering** | Admin (OL) | Låst med PIN-kode. Endre linjer, stasjoner, steg, valg og regler |
+
+> PIN-koden i den frittstående versjonen hindrer uhell, men er ikke en ekte
+> sikkerhetsbarriere. Ekte rettigheter kommer med SharePoint.
+
+## 4. Prosjektløp (Staircon-stasjonen først)
+
+1. **Nytt prosjekt.** Last inn ordrebekreftelse og plantegning (PDF eller skann),
+   eller fyll ut for hånd.
+2. **Bekreft uttrekk.** Appen viser hvert felt den fant, *hvor* i dokumentet det
+   sto, og du godkjenner eller retter.
+3. **Stien bygges** av svarene: trappetype, ganglinje, vanger, tillegg,
+   stusstrinn eller barnesikring osv. Nye valg underveis endrer resten av stien.
+4. **Arbeid.** Ett aktivt steg om gangen. Fast statuslinje øverst (prosjekt,
+   fase, fremdrift, tid). Fast **hurtigtastpanel** som viser Staircon-tastene for
+   akkurat dette steget.
+5. **Rapport** til produksjonsmappa (utskrift/PDF), som i dag.
+
+**Endringslogg.** Knappen «+ Endring» fylles automatisk med initialer og dato.
+Du skriver kommentaren og kan merke hvilke steg som påvirkes. De stegene blir
+«Må kontrolleres på nytt» til noen huker dem av igjen.
+
+**Valghistorikk.** Endres et svar slik at utførte steg faller ut av stien,
+vises de som «forlatt gren» i loggen. De slettes ikke.
+
+**Tid.**
+- Tiden går mens et steg er aktivt.
+- **Pause** med hurtigtast. Ved retur kommer et valgfritt spørsmål, «Hva avbrøt?»,
+  med svarene Hjelp kollega · Telefon/kunde · Møte · Annet.
+- **Inaktiv i 10 min** gir spørsmålet «Jobbet du med prosjektet?», og tiden
+  trekkes fra ved nei.
+- Resultat: netto tid per steg og prosjekt, pluss en oversikt over avbrytelser.
+
+**Tilbud** beholdes som egen fase (tilbudsnavn, filbane, Sketchfab-lenke,
+«Gjør om til prosjekt»).
+
+## 5. Prosedyrer (NT-Arkivet)
+
+- NT-nummer, kategori, status (utkast/aktiv/utgått) og «erstattet av».
+- Revisjonshistorikk med dato, forfatter og endringsnotat (påkrevd ved lagring).
+- QR-lapp per prosedyre for utskrift og montering på maskin eller arbeidsplass.
+- Innholdsblokker: tekst, bilde, video, tegning, sjekkliste, varsel, hurtigtaster
+  og verdier.
+- **Gjentakende oppgaver** får intervall (dag/uke/måned) og kvittering (hvem og når).
+  Forfalte oppgaver markeres rødt.
+
+## 6. Dokumentimport (nivå 1 + 2, ingen abonnement)
+
+- **Lesbar PDF:** tekst hentes ut lokalt med pdf.js.
+- **Skannet PDF eller bilde:** lokal OCR med Tesseract (norsk språkdata, kjører
+  i nettleseren).
+- **Regelbibliotek:** nøkkelord og mønstre gjøres om til felt. Biblioteket kan
+  redigeres i appen, for eksempel `«Venstre opp»` → ganglinje = venstre_opp,
+  eller `S\d{4}-[A-Z]` → fargekode.
+- **Felter i første omgang:** kalkylenr., PO-nr., kunde, trappetype, ganglinje,
+  vangeoppsett, tillegg (repo, gelender, glass, megler, TV-ramme, spiler),
+  overflatebehandling, antall endelister, trinnkasse, dekklister, lysåpning og
+  etasjehøyde.
+- Ingenting brukes uten at du har bekreftet det.
+
+Regelbiblioteket trenes på 3–5 ekte ordrebekreftelser fra Kalken. De sendes
+når planen er godkjent.
+
+## 7. Design
+
+Stilen er Nothing OS fra OddHub, med Nortrapp-farger.
+
+| Token | Mørk | Lys |
+|---|---|---|
+| Bakgrunn | `#161619` med prikkrutenett | `#F4EFE0` (krem) |
+| Kort | `#1C1C20`, tynn kant, avrundet | `#FBF8F0` |
+| Tekst | `#ECEBE6` | `#19100E` |
+| Aksent / valgt sti | `#A8332F` (Nortrapp-rød), lysnet for kontrast | `#A8332F` |
+| Sekundær | `#5C8FC0` (Nortrapp-blå, lysnet) | `#004169` (Nortrapp-blå) |
+
+- **Typografi:** punktmatrise (Doto) for tall og store titler, monospace med
+  store bokstaver for etiketter, og en lesbar grotesk for brødtekst.
+- **Logo:** hvit variant i mørk modus, farget i lys modus.
+- Bytte mellom lys og mørk modus. Lesbarhet har høyeste prioritet.
+
+## 8. Staircon-innhold – kvalitetssikring
+
+Kilder: dagens `prosess.js` (v2.9) + `staircon.chm` (svensk, 187 sider) + den
+norske ordlisten i hjelpefilen.
+
+Dette skal rettes eller avklares:
+
+- [ ] **Alt + C** finnes ikke i hjelpefilen. Alt + X / Alt + Y = flytt bare i X / Y
+      i sideriss. I arbeidsvyen betyr Alt + X «flytt trinnpunkt, behold motsatt
+      side» og Alt + Z «behold senter».
+- [ ] **Ctrl + F** heter «Egenskaper etasje» i hjelpefilen.
+- [ ] **Ctrl + L / Ctrl + D** for utskrift må verifiseres i norsk versjon.
+- [ ] Legge til nyttige taster: F5 (bjelkelagsåpning), F6 (lage trapp),
+      Ctrl + Shift + F6 (svingtrapp), F8 / F9 (regn om ganglinje / trinnlegging),
+      Alt + F9 (lagre hjørnemål), Shift + F12 (test mot norm), Shift + F5–F8 (bytt vy).
+- [ ] Hver Staircon-dialog i stegene kobles til tilsvarende hjelpeside, med
+      forklaring oversatt til norsk via ordlisten.
+- [ ] Nortrapps egne skjermbilder brukes først. Hjelpefilens bilder brukes der
+      vi mangler eget.
+
+## 9. Teknikk
+
+- **Kode:** TypeScript + Vite, bygges til en mappe som kan ligge på fellesdisken.
+  Små, lesbare moduler, slik at koden også kan brukes til å lære.
+- **Data:** alt innhold (linjer, prosedyrer, regler) og alle prosjekter lagres som
+  JSON gjennom et **datalag med adaptere**:
+  1. *Lokal* – i nettleseren (prototype)
+  2. *Fellesfil* – én `nt-arkivet.json` på fellesdisken, lest og skrevet via Edge/Chrome
+  3. *SharePoint* – senere, samme grensesnitt
+- **Eksport/import** av hele databasen som fil (backup).
+- **Innhold** versjoneres i Git i dette repoet.
+
+## 10. Første leveranse – milepæler
+
+| # | Leveranse | Ferdig når |
+|---|---|---|
+| M1 | Rammeverk, designsystem (lys/mørk), T-banekart for hele Nortrapp | Kartet vises med alle linjer, og grå stasjoner er klikkbare |
+| M2 | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
+| M3 | Endringslogg med «må kontrolleres», valghistorikk, tid/pause/avbrudd, rapport, tilbud | Rapporten viser endringer og tid |
+| M4 | Dokumentimport: pdf.js + OCR + redigerbart regelbibliotek | Eksempeldokumentene gir riktige felt |
+| M5 | Prosedyrebibliotek med QR, revisjoner, intervall/kvittering, 2–3 eksempler | QR-lapp kan skrives ut |
+| M6 | Redigeringsmodus (PIN) for linjer, stasjoner, steg, valg og regler | Et nytt steg kan legges til uten kode |
+
+**Ikke med nå:** SharePoint, ekte innlogging, AI-tjenester, integrasjon med den
+nye kalkulasjonsappen (vurderes når den finnes). Brukere velger initialer ved oppstart.
+
+## 11. Åpne punkter
+
+1. **Delt data og QR på mobil.** En fil på fellesdisken fungerer for PC-ene, men
+   en telefon som skanner en QR-kode trenger en adresse den kan nå. Valg:
+   - a) Liten lokal webserver på nettverket (PC, NAS eller Raspberry Pi) – anbefalt
+   - b) Bare PC-er i første omgang, og QR kommer når SharePoint er på plass
+2. **Eksempeldokumenter:** 3–5 ordrebekreftelser og plantegninger, gjerne med
+   ulike trappetyper og én skannet.
