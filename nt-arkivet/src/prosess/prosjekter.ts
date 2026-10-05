@@ -2,7 +2,7 @@ import { db, nyId, oppdater } from '../data/store';
 import { bruker } from '../ui/settings';
 import { svarTekst } from './motor';
 import { nyesteVersjonsnr, prosessForProsjekt } from './arkiv';
-import type { LoggPost, Prosess, Prosjekt, ProsjektType, Svar } from './types';
+import type { LoggPost, Prosess, Prosjekt, ProsjektDokument, ProsjektType, Svar } from './types';
 
 /* Prosjekter: opprette, svare, krysse av og logge.
    Alt som skjer i et prosjekt loggføres med tid og initialer. */
@@ -206,4 +206,49 @@ export async function importerGamle() {
   const nye = finnGamleProsjekter().map(konverterGammelt);
   if (nye.length) await oppdater((d) => ({ ...d, prosjekter: [...nye, ...d.prosjekter] }));
   return nye.length;
+}
+
+/** Én bekreftet verdi fra innlesingen. */
+export interface InnlestVerdi {
+  nokkel: string;
+  etikett: string;
+  verdi: Svar;
+  /** Teksten som vises i loggen, f.eks. «Rett trapp». */
+  tekst: string;
+  /** Hvor verdien ble funnet, f.eks. «OB s.1: «1 stk. RETT TRAPP …»». */
+  kilde?: string;
+}
+
+/**
+ * Legger bekreftede verdier fra ordrebekreftelse/produksjonsordre inn i prosjektet.
+ * Valg blir svar (og regnes som utført), resten blir felt. Alt loggføres med
+ * hvem som bekreftet og hvor verdien kom fra.
+ */
+export function lesInn(prosjektId: string, verdier: InnlestVerdi[], dokumenter: ProsjektDokument[]) {
+  return endreProsjekt(prosjektId, (p) => {
+    const steg = prosessFor(p).faser.flatMap((f) => f.steg);
+    const naa = new Date().toISOString();
+    const ny: Prosjekt = { ...p, svar: { ...p.svar }, felt: { ...p.felt }, utfort: { ...p.utfort }, dokumenter: [...(p.dokumenter ?? []), ...dokumenter] };
+    const logg: LoggPost[] = [];
+    if (dokumenter.length) {
+      logg.push(post('innlest', `Lest inn ${dokumenter.map((d) => `${{ ob: 'ordrebekreftelse', po: 'produksjonsordre', planview: 'planview', annet: 'dokument' }[d.type]} (${d.navn})`).join(', ')} — ${verdier.length} felt bekreftet`));
+    }
+    for (const v of verdier) {
+      const valgSteg = steg.find((s) => s.id === v.nokkel && s.valg);
+      if (valgSteg) {
+        ny.svar[v.nokkel] = v.verdi;
+        ny.utfort[v.nokkel] ??= { tid: naa, brukerId: bruker.value };
+      } else {
+        const tekst = Array.isArray(v.verdi) ? v.verdi.join(', ') : v.verdi;
+        ny.felt[v.nokkel] = tekst;
+        if (v.nokkel === 'kalkylenr') ny.kalkylenr = tekst;
+        if (v.nokkel === 'kunde') ny.kunde = tekst;
+        if (v.nokkel === 'prosjektnr' && tekst && p.type === 'prosjekt') ny.nummer = tekst.toUpperCase();
+      }
+      const stegId = valgSteg?.id ?? steg.find((s) => s.felter?.some((f) => f.nokkel === v.nokkel))?.id;
+      logg.push(post('innlest', `${v.etikett} → ${v.tekst} (bekreftet${v.kilde ? `, fra ${v.kilde}` : ''})`, stegId));
+    }
+    ny.logg = [...p.logg, ...logg];
+    return ny;
+  });
 }

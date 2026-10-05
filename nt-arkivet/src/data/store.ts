@@ -1,6 +1,8 @@
 import { signal } from '@preact/signals';
 import type { Database, Farge, Kort, KortType, Stasjon } from './types';
 import { SEED, STAIRCON_POST } from './seed';
+import { STAIRCON_INNLESING } from '../prosess/staircon/innlesing';
+import type { ProsessPost } from '../prosess/types';
 
 /* ─────────────────────────────────────────────────────────────
    Datalaget. Appen snakker bare med en «Lager»-adapter, så vi kan
@@ -112,6 +114,19 @@ export function migrer(d: Gammel): Database {
       prosesser: d.prosesser ?? [STAIRCON_POST],
       innstillinger: d.innstillinger ?? {},
       prosjekter: d.prosjekter.map((p: Gammel) => ({ ...p, prosessVersjon: p.prosessVersjon ?? 1 })),
+    };
+  }
+  if (d.skjema < 6) {
+    // v6: Staircon får regelbiblioteket for innlesing av ordrebekreftelse og produksjonsordre.
+    //     Det legges inn i alle versjoner, så også prosjekter på eldre versjoner kan lese inn.
+    d = {
+      ...d,
+      skjema: 6,
+      prosesser: d.prosesser.map((p: ProsessPost) =>
+        p.id !== 'staircon'
+          ? p
+          : { ...p, versjoner: p.versjoner.map((v) => (v.prosess.innlesing ? v : { ...v, prosess: { ...v.prosess, innlesing: STAIRCON_INNLESING } })) },
+      ),
     };
   }
   return d as Database;

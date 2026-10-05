@@ -5,6 +5,7 @@ import { hentPost, tilbakestillProsess } from '../prosess/arkiv';
 import { FaseEditor } from '../prosess/redigering/FaseEditor';
 import * as op from '../prosess/redigering/ops';
 import { ProsessInnstillinger } from '../prosess/redigering/ProsessInnstillinger';
+import { InnlesingEditor } from '../prosess/redigering/InnlesingEditor';
 import { regelTekst } from '../prosess/redigering/RegelBygger';
 import { angreProsess, arbeidskopi, endreProsess, endringerI, forkastProsess, kanAngre, prosessUtkast, publiserUtkast } from '../prosess/redigering/state';
 import { StegEditor } from '../prosess/redigering/StegEditor';
@@ -12,7 +13,7 @@ import { KATEGORIER, type Steg } from '../prosess/types';
 import { Modal } from '../ui/Modal';
 import '../prosess/redigering/redigering.css';
 
-type Valgt = { type: 'steg'; id: string } | { type: 'fase'; id: string } | { type: 'innstillinger' };
+type Valgt = { type: 'steg'; id: string } | { type: 'fase'; id: string } | { type: 'innstillinger' } | { type: 'innlesing' };
 
 /** Små ikoner som viser hvilke byggeklosser et steg har, så man ser innholdet uten å åpne det. */
 function klossIkoner(s: Steg): string[] {
@@ -115,6 +116,11 @@ export function ProsessEditor({ id, onTilbake }: { id: string; onTilbake: () => 
           <button class={`sk2-innst ${valgt.type === 'innstillinger' ? 'valgt' : ''}`} onClick={() => setValgt({ type: 'innstillinger' })}>
             ⚙ Innstillinger for prosessen
           </button>
+          {(prosess.prosjekter || prosess.innlesing) && (
+            <button class={`sk2-innst ${valgt.type === 'innlesing' ? 'valgt' : ''}`} onClick={() => setValgt({ type: 'innlesing' })}>
+              ⇩ Innlesing av ordre{prosess.innlesing ? ` · ${prosess.innlesing.regler.length} regler` : ''}
+            </button>
+          )}
           {prosess.faser.map((f, fi) => (
             <div key={f.id} class="sk2-fase">
               <button class={`sk2-fase-hode ${valgt.type === 'fase' && valgt.id === f.id ? 'valgt' : ''}`} onClick={() => velgFase(f.id)}>
@@ -164,6 +170,7 @@ export function ProsessEditor({ id, onTilbake }: { id: string; onTilbake: () => 
           {valgt.type === 'steg' && <StegEditor key={valgt.id} prosessId={id} stegId={valgt.id} onVelg={velgSteg} />}
           {valgt.type === 'fase' && <FaseEditor key={valgt.id} prosessId={id} faseId={valgt.id} onVelgSteg={velgSteg} onVelgFase={velgFase} />}
           {valgt.type === 'innstillinger' && <ProsessInnstillinger prosessId={id} />}
+          {valgt.type === 'innlesing' && <InnlesingEditor prosessId={id} />}
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import { STAIRCON_INNLESING } from './innlesing';
 import type { Prosess } from '../types';
 import { ALLTID, STAIRCON_TASTER } from './hurtigtaster';
 
@@ -28,6 +29,7 @@ export const STAIRCON: Prosess = {
   prosjekter: true,
   hurtigtaster: STAIRCON_TASTER,
   alltidTaster: ALLTID,
+  innlesing: STAIRCON_INNLESING,
   faser: [
     /* ───────────────────────────── 0 · OPPSETT ───────────────────────────── */
     {

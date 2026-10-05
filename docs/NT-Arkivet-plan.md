@@ -253,7 +253,7 @@ Dette skal rettes eller avklares:
 | M1 ✅ | Rammeverk, designsystem (lys/mørk), T-banekart for hele Nortrapp | Kartet vises med alle linjer, og grå stasjoner er klikkbare |
 | M2 ✅ | Staircon-stasjonen: innhold v3.0 (kvalitetssikret), opplærings- og produksjonsmodus, valg som bygger stien, hurtigtastpanel | Et helt prosjekt kan kjøres gjennom |
 | M3 | Endringslogg med «må kontrolleres», valghistorikk, tid/pause/avbrudd, rapport, tilbud | Rapporten viser endringer og tid |
-| M4 | Dokumentimport: pdf.js + OCR + redigerbart regelbibliotek | Eksempeldokumentene gir riktige felt |
+| M4 ✅ | Dokumentimport: pdf.js + OCR (offline, også fra én HTML-fil) + redigerbart regelbibliotek med test, Planview som egen dokumenttype, bekreftelse per felt med kildelinje, lagring av dokumentene i prosjektet, innlesing i eksisterende prosjekt med sammenligning | Eksempeldokumentene gir riktige felt |
 | M5 ✅ | Prosessarkiv med faste ID-er (NT-MAS-001 …), QR-lapper, versjoner, intervall/kvittering, «Kun lesing», «Kjekt å vite», 8 maler | QR-lapp kan skrives ut |
 | M6a ✅ | Redigeringsmodus (PIN) for kort, linjer, samlinger og stasjoner: utkast, angre, publisering med kommentar, historikk og tilbakestilling | Kartet kan bygges om uten kode |
 | M6b ✅ | Prosessredigering: strukturkart + ✎ i opplæring, byggeklosser (tekst, Husk, bilder, video, valg, felt, verdier, hurtigtaster, dokument, lenke, hjelp, farger), regler med nedtrekkslister, publisering med versjonslåste prosjekter og «Oppgrader» | Et nytt steg kan legges til uten kode |
@@ -285,3 +285,16 @@ Programmet leveres som én `.exe` som kjører som Windows-tjeneste.
 1. **Server:** ✅ Avklart. Nortrapp har en server i bygget som alle når. Vi utvikler
    og tester lokalt først, og flytter dit når appen er klar.
 2. **Flere eksempler:** svingtrapp, repo, glass, venstre opp og gelender mangler.
+
+### Resultat av innlesingen (M4, testet på eksempeldokumentene)
+
+- **Produksjonsordrene (H420–H483)** gir nummer, kunde, uke, ganglinje, tillegg, gelender,
+  overflate, EL og Planview-tall riktig. Trappetypen mangler alltid i PO-en og blir spurt om.
+- **Ordrebekreftelsene (skannet)** leses med OCR. Det tar ca. 5 sek per bilde og ca. 30 sek
+  for en PDF med 3 sider. Nummer, trappetype, bredde, opptrinn og overflate blir riktige.
+- **Planview** gjenkjennes som egen type. Tall som OCR leser feil (f.eks. bjelkelag «35»)
+  fanges opp av rimelighetsgrenser og markeres som usikre.
+- **Ganglinjen** står ikke i dokumentene når trappen står «Mellom vegger», og blir spurt om.
+- Usikre regler som må bekreftes på flere prosjekter: svingtrapp-ordene i Kalken
+  (KVARTSVING, HALVSVING, U-TRAPP), «Spilevegg» → spiler til tak og «Synlig veggvange» →
+  1 synlig vange.

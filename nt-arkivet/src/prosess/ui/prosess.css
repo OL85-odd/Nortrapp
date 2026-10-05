@@ -1224,3 +1224,10 @@ body.redigerer .hurtigtaster {
     padding-left: 0;
   }
 }
+
+.ph-dok {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}

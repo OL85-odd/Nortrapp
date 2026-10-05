@@ -106,7 +106,74 @@ export interface Prosess {
   alltidTaster?: string[];
   /** Fritekst i panelet for maskiner og annet. Én linje per punkt. */
   kjektAVite?: string;
+  /** Regelbiblioteket for innlesing av ordrebekreftelse og produksjonsordre. */
+  innlesing?: Innlesing;
   faser: Fase[];
+}
+
+/* ── Innlesing av dokumenter ──────────────────────────────── */
+
+/** Dokumenttypene som kan leses inn. «annet» (skisser o.l.) lagres, men tolkes ikke.
+    «planview» er tegningen fra Staircon (tittelfeltet med etasjehøyde, inntrinn osv.). */
+export type DokType = 'ob' | 'po' | 'planview' | 'annet';
+
+/** Et felt som innlesingen skal fylle ut. Nøkkelen er et valg-steg (f.eks. «trappetype»),
+    en feltnøkkel i prosessen (f.eks. «overflate») eller en egen nøkkel (f.eks. «etasjehoyde»). */
+export interface ImportFelt {
+  nokkel: string;
+  /** Visningsnavn. Hentes fra prosessen hvis tomt. */
+  etikett?: string;
+  /** Må fylles ut. Hvis ikke funnet, spør appen. */
+  pakrevd?: boolean;
+  /** Bare påkrevd når denne dokumenttypen er lest inn. */
+  kreverDok?: Exclude<DokType, 'annet'>;
+  /** Spørsmålet brukeren får når feltet mangler. */
+  sporsmal?: string;
+  /** Foreslått verdi når dokumentene ikke nevner feltet (vises som usikker). */
+  standard?: string;
+  /** Tall sammenlignes som tall (056867 = 56867). */
+  tall?: boolean;
+  enhet?: string;
+  /** Rimelige verdier [min, maks]. Utenfor → usikker (fanger opp OCR-feil). */
+  omrade?: [number, number];
+}
+
+/** En regel: finner et mønster i en linje og gir en verdi til et felt. */
+export interface ImportRegel {
+  id: string;
+  felt: string;
+  /** Tekst med {tall}, {tekst} og {*} — eller «regex:» foran et regulært uttrykk. */
+  monster: string;
+  /** Fast verdi (f.eks. alternativet «rett»). Tom: verdien hentes fra {tall}/{tekst}. */
+  verdi?: string;
+  /** Bare i denne dokumenttypen. */
+  dok?: Exclude<DokType, 'annet'>;
+  /** Linjen teller ikke hvis den også inneholder dette (samme mønsterspråk). */
+  unntak?: string;
+  /** Treffet er bare et hint — feltet markeres som usikkert. */
+  usikker?: boolean;
+  /** Rødt varsel som vises når regelen slår til. */
+  varsel?: string;
+}
+
+export interface Innlesing {
+  felter: ImportFelt[];
+  regler: ImportRegel[];
+}
+
+/** Et dokument som er lest inn og lagret med prosjektet. */
+export interface ProsjektDokument {
+  id: string;
+  navn: string;
+  type: DokType;
+  /** Originalfilen («media:…»). */
+  fil: string;
+  /** Sidene som bilder («media:…»). */
+  sider: string[];
+  lest: string;
+  brukerId: string | null;
+  /** Lest med OCR (skannet) eller som tekst. */
+  ocr: boolean;
 }
 
 /* ── Prosessarkivet ────────────────────────────────────────── */
@@ -144,7 +211,7 @@ export interface ProsessPost {
 
 export type Svar = string | string[];
 
-export type LoggType = 'opprettet' | 'utfort' | 'angret' | 'svar' | 'felt' | 'notat' | 'omgjort' | 'importert' | 'oppgradert';
+export type LoggType = 'opprettet' | 'utfort' | 'angret' | 'svar' | 'felt' | 'notat' | 'omgjort' | 'importert' | 'oppgradert' | 'innlest';
 
 export interface LoggPost {
   tid: string;
@@ -178,5 +245,7 @@ export interface Prosjekt {
   aktivt?: string;
   logg: LoggPost[];
   tilbud?: { filbane?: string; sketchfab?: string };
+  /** Ordrebekreftelse, produksjonsordre o.l. som er lest inn. */
+  dokumenter?: ProsjektDokument[];
   ferdig?: string;
 }

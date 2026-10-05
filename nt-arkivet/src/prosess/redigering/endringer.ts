@@ -28,6 +28,7 @@ export function beskrivProsessEndringer(for_: Prosess, etter: Prosess): string[]
     ['kjektAVite', '«Kjekt å vite»'],
     ['hurtigtaster', 'hurtigtastlisten'],
     ['beskrivelse', 'beskrivelse'],
+    ['innlesing', 'regelbiblioteket for innlesing'],
   ] as [keyof Prosess, string][]) {
     if (JSON.stringify(for_[k] ?? null) !== JSON.stringify(etter[k] ?? null)) ut.push(`Endret ${navn}`);
   }

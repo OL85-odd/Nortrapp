@@ -49,9 +49,13 @@ async function komprimer(fil: Blob): Promise<Blob> {
 }
 
 export async function lagreMedia(fil: Blob): Promise<string> {
+  return lagreFil(await komprimer(fil));
+}
+
+/** Lagrer en fil uendret (f.eks. original-PDF-en til en ordrebekreftelse). */
+export async function lagreFil(fil: Blob): Promise<string> {
   const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-  const data = await komprimer(fil);
-  await transaksjon('readwrite', (s) => s.put(data, id));
+  await transaksjon('readwrite', (s) => s.put(fil, id));
   return 'media:' + id;
 }
 

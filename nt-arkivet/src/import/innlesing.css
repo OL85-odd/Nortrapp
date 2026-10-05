@@ -1,0 +1,695 @@
+/* ── Innlesing av ordrebekreftelse / produksjonsordre ──────── */
+
+.ir-modal {
+  width: min(1240px, 100%);
+  max-height: calc(100vh - 32px);
+  gap: 14px;
+}
+
+.ir-ingress {
+  font-size: 15px;
+}
+
+/* Slippsone */
+.ir-slipp {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 20px;
+  text-align: center;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ir-slipp:hover,
+.ir-slipp:focus-visible,
+.ir-slipp.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.ir-slipp.kompakt {
+  padding: 14px;
+}
+
+.ir-slipp-pil {
+  font-size: 40px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* Dokumentliste */
+.ir-doks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ir-dok {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.ir-dok.feil {
+  border-color: var(--accent);
+}
+
+.ir-dok-ikon {
+  flex: none;
+  width: 42px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-soft);
+}
+
+.ir-dok-tekst {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ir-dok-tekst strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ir-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent) calc(var(--andel) * 100%), var(--track-idle) 0);
+  transition: background 0.2s ease;
+}
+
+.ir-type button {
+  font-size: 11px;
+}
+
+/* Oppsummering */
+.ir-oppsummering {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ir-chip.funnet {
+  color: var(--ok);
+  border-color: currentColor;
+}
+
+.ir-chip.usikker {
+  color: var(--warn);
+  border-color: currentColor;
+}
+
+.ir-chip.mangler {
+  color: var(--accent);
+  border-color: currentColor;
+}
+
+/* To kolonner: felt til venstre, dokumentet til høyre */
+.ir-kontroll {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+.ir-felter {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.ir-rad {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ir-rad.funnet {
+  border-left-color: var(--ok);
+}
+
+.ir-rad.usikker {
+  border-left-color: var(--warn);
+}
+
+.ir-rad.mangler {
+  border-left-color: var(--accent);
+}
+
+.ir-rad.valgt,
+.ir-rad:focus-visible {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px var(--secondary-soft);
+}
+
+.ir-rad.ferdig {
+  border-left-color: var(--line-strong);
+  background: transparent;
+}
+
+.ir-status {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ir-status.funnet {
+  color: var(--ok);
+}
+
+.ir-status.usikker {
+  color: var(--warn);
+}
+
+.ir-status.mangler {
+  color: var(--accent);
+}
+
+.ir-status.ferdig {
+  color: var(--text-soft);
+}
+
+.ir-innhold {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ir-etikett {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ir-verdi-fast {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.ir-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ir-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.ir-input input:focus {
+  outline: 2px solid var(--secondary);
+  outline-offset: -1px;
+}
+
+.ir-valg {
+  flex-wrap: wrap;
+  justify-self: start;
+}
+
+.ir-valg button {
+  font-size: 11px;
+}
+
+.ir-flere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.ir-flere label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ir-flere input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.ir-grunn {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--warn);
+}
+
+.ir-rad.mangler .ir-grunn {
+  color: var(--accent);
+}
+
+.ir-varsel {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius-s);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ir-kilde {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.ir-kilde:hover {
+  border-color: var(--secondary);
+  color: var(--text);
+}
+
+.ir-knapper {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+}
+
+.ir-utelat {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+/* Dokumentvisning */
+.ir-vis {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 10px;
+  max-height: 62vh;
+  min-height: 0;
+}
+
+.ir-vis-topp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ir-vis-topp .segmented button {
+  font-size: 11px;
+}
+
+.ir-vis-topp .btn {
+  margin-left: auto;
+}
+
+.ir-side {
+  overflow: auto;
+  border-radius: var(--radius-s);
+  background: #fff;
+  min-height: 0;
+}
+
+.ir-side-innhold {
+  position: relative;
+}
+
+.ir-side img {
+  display: block;
+  width: 100%;
+  cursor: zoom-in;
+}
+
+.ir-side.zoom .ir-side-innhold {
+  width: 220%;
+}
+
+.ir-side.zoom img {
+  cursor: zoom-out;
+}
+
+.ir-merke {
+  position: absolute;
+  margin: -3px -5px;
+  padding: 3px 5px;
+  box-sizing: content-box;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(168, 51, 47, 0.12);
+  pointer-events: none;
+  animation: ir-puls 1.6s ease-in-out 2;
+}
+
+@keyframes ir-puls {
+  50% {
+    box-shadow: 0 0 0 6px rgba(168, 51, 47, 0.18);
+  }
+}
+
+.ir-vis-navn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Utregnede kontroller (idealformel) */
+.ir-kontroller {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ir-kontroller .ok {
+  color: var(--ok);
+}
+
+.ir-kontroller .avvik {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ir-bunn {
+  align-items: center;
+  position: sticky;
+  bottom: -28px;
+  margin: 0 -28px -28px;
+  padding: 12px 28px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.ir-teller {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ir-teller .dot {
+  font-size: 24px;
+}
+
+/* Dokumenter i prosjektet */
+.dok-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.dok-kort {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.dok-sider {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.dok-sider button {
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.dok-sider img {
+  display: block;
+  height: 120px;
+}
+
+.dok-stor {
+  max-height: 70vh;
+  overflow: auto;
+  border-radius: var(--radius-s);
+  background: #fff;
+}
+
+.dok-stor img {
+  display: block;
+  width: 100%;
+}
+
+.innleste {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  font-size: 13px;
+}
+
+.innleste dt {
+  color: var(--text-soft);
+}
+
+.innleste dd {
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 860px) {
+  .ir-kontroll {
+    grid-template-columns: 1fr;
+  }
+
+  .ir-felter,
+  .ir-vis {
+    max-height: none;
+  }
+
+  .ir-vis {
+    order: -1;
+    height: 50vh;
+  }
+}
+
+/* ── Regelbiblioteket i prosessredigeringen ────────────────── */
+
+.ie-hjelp {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.ie-hjelp code,
+.ie-monster input {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.ie-felter {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ie-felt {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+}
+
+.ie-felt.apen {
+  border-color: var(--secondary);
+}
+
+.ie-felt-hode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+}
+
+.ie-felt-navn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ie-felt-innhold {
+  display: grid;
+  gap: 10px;
+  padding: 4px 12px 12px;
+}
+
+.ie-rad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.ie-rad > .felt {
+  flex: 1;
+  min-width: 140px;
+}
+
+.ie-regler {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ie-regel {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-s);
+}
+
+.ie-monster {
+  flex: 1;
+}
+
+.ie-monster.ugyldig input {
+  border-color: var(--accent);
+}
+
+.ie-mer summary {
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.ie-mer[open] {
+  display: grid;
+  gap: 8px;
+}
+
+.ie-nytt {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.ie-nytt select,
+.ie-nytt input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.ie-testtekst {
+  width: 100%;
+  min-height: 120px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.ie-test[open] {
+  display: grid;
+  gap: 8px;
+}
+
+.ie-resultat {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ie-resultat td {
+  padding: 6px 6px;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.ie-resultat td:first-child {
+  width: 38%;
+  color: var(--text-soft);
+  border-left: 3px solid var(--line);
+}
+
+.ie-resultat tr.funnet td:first-child {
+  border-left-color: var(--ok);
+}
+
+.ie-resultat tr.usikker td:first-child {
+  border-left-color: var(--warn);
+}
+
+.ie-resultat tr.mangler td:first-child {
+  border-left-color: var(--accent);
+}
+
+.ie-kilde {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}

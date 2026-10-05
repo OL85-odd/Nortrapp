@@ -31,6 +31,7 @@ bygget. Den trenger ikke internett, og fontene er inkludert.
 | `src/ui/` | Toppfelt, temavalg, velger for initialer og felles dialog |
 | `src/edit/` | Redigeringsmodus: operasjoner (`ops.ts`), utkast/PIN/publisering (`state.ts`), paneler og dialoger |
 | `src/prosess/` | Prosessmotoren (`motor.ts`), prosjekter (`prosjekter.ts`), Staircon-innholdet (`staircon/`) og visningene for opplæring, produksjon og oversikt (`ui/`) |
+| `src/import/` | Innlesing av ordrebekreftelse, produksjonsordre og Planview: lesing med pdf.js og OCR (`les.ts`), mønsterspråket (`monster.ts`), tolking (`tolk.ts`) og dialogen (`InnlesingDialog.tsx`). Regelbiblioteket for Staircon ligger i `src/prosess/staircon/innlesing.ts` |
 | `src/views/` | Sider: oversikt, stasjonspanel, arbeidsflate (prosjektliste) og prosjektvisning |
 
 Data lagres foreløpig i nettleseren. `store.ts` har et `Lager`-grensesnitt,
@@ -43,3 +44,18 @@ Innholdet ligger i `src/prosess/staircon/staircon.ts`. Bildene ligger i
 `src/prosess/staircon/bilder/`. Kjør `npm test` etter endringer: testene sjekker at
 alle steg-ID-er er unike, at reglene peker på steg som finnes, at bildene finnes og
 at hurtigtastene er forklart. Se [`docs/Staircon-v3-endringer.md`](../docs/Staircon-v3-endringer.md).
+
+## Innlesing av ordre (OCR)
+
+«⇩ Les inn ordre» på Staircon-siden tar imot ordrebekreftelse, produksjonsordre og
+Planview som PDF eller bilde. Alt leses lokalt i nettleseren:
+
+- **Lesbar PDF** leses med pdf.js. Kolonner markeres med «│».
+- **Skannet PDF/bilde** leses med Tesseract (norsk språkdata, `@tesseract.js-data/nor`).
+- Motoren, arbeideren og språkdataene settes sammen til ett arbeider-skript.
+  Bare slik virker OCR også fra en enkelt HTML-fil (`file://`).
+- Hvert felt får status funnet/usikker/mangler, vises med linjen det ble funnet i og
+  må bekreftes. Dokumentene lagres med prosjektet (IndexedDB).
+- Reglene redigeres under *Rediger prosess → Innlesing av ordre* og kan testes der.
+
+Kundedokumenter skal ikke i Git. Testene i `src/import/tolk.test.ts` bruker oppdiktede linjer.

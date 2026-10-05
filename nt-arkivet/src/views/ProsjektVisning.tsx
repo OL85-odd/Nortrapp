@@ -14,6 +14,8 @@ import { StegInnhold } from '../prosess/ui/StegInnhold';
 import { StiKart } from '../prosess/ui/StiKart';
 import { modus, type Modus } from '../ui/settings';
 import { useFeltVerdi } from '../ui/hooks';
+import { DokumentDialog } from '../import/Dokumenter';
+import { InnlesingDialog } from '../import/InnlesingDialog';
 import '../prosess/ui/prosess.css';
 
 const MODUSER: { id: Modus; navn: string }[] = [
@@ -66,6 +68,7 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
   const aktivt = aktivtSteg(prosess, p);
   const aktivFase = aktivt ? faseFor(prosess, aktivt.id)?.id : undefined;
   const m = modus.value;
+  const [dok, setDok] = useState<'liste' | 'lesinn' | null>(null);
 
   const ga = (s: Steg | null) => s && settAktivt(p.id, s.id);
 
@@ -83,7 +86,7 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
   // Leser alltid fersk tilstand, så raske tastetrykk ikke bruker en gammel versjon.
   useEffect(() => {
     const tast = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, textarea, select, [role=dialog]') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.target as HTMLElement).closest('input, textarea, select, [role=dialog]') || document.querySelector('.modal-bakgrunn') || e.ctrlKey || e.metaKey || e.altKey) return;
       if (modus.value === 'oversikt') return;
       const p = hentProsjekt(id);
       if (!p) return;
@@ -143,6 +146,20 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
             ))}
             {/ikke avklart/i.test(p.felt.overflate ?? '') && <span class="chip fare">Overflate ikke avklart</span>}
           </div>
+          {(prosess.innlesing || (p.dokumenter ?? []).length > 0) && p.type !== 'gjennomforing' && (
+            <div class="ph-dok">
+              {(p.dokumenter ?? []).length > 0 && (
+                <button class="btn liten" onClick={() => setDok('liste')}>
+                  Dokumenter · {p.dokumenter!.length}
+                </button>
+              )}
+              {prosess.innlesing && !p.ferdig && (
+                <button class="btn liten" onClick={() => setDok('lesinn')} title="Les inn ordrebekreftelse eller produksjonsordre i dette prosjektet">
+                  ⇩ Les inn dokument
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <div class="ph-hoyre">
           <div class="ph-fremdrift" aria-label={`${fr.prosent} prosent ferdig`}>
@@ -161,6 +178,9 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
           </div>
         </div>
       </header>
+
+      {dok === 'liste' && <DokumentDialog p={p} onLukk={() => setDok(null)} onLesInn={prosess.innlesing && !p.ferdig ? () => setDok('lesinn') : undefined} />}
+      {dok === 'lesinn' && <InnlesingDialog prosessId={p.prosessId} prosjektId={p.id} onLukk={() => setDok(null)} onFerdig={() => setDok('liste')} />}
 
       {p.type === 'tilbud' && <TilbudKort p={p} />}
 

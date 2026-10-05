@@ -12,6 +12,7 @@ import { Modal } from '../ui/Modal';
 import { modus } from '../ui/settings';
 import { oppsummering } from './ProsjektVisning';
 import { LesVisning } from './LesVisning';
+import { InnlesingDialog } from '../import/InnlesingDialog';
 import '../prosess/ui/prosess.css';
 
 interface Props {
@@ -42,6 +43,7 @@ export function Arbeidsflate({ prosessId, onApne, onTilbake }: Props) {
   const post = hentPost(prosessId);
   const [ny, setNy] = useState<ProsjektType | null>(null);
   const [visFerdige, setVisFerdige] = useState(false);
+  const [innlesing, setInnlesing] = useState<File[] | null>(null);
   const gamle = prosessId === 'staircon' ? finnGamleProsjekter().length : 0;
 
   if (!post) return <main class="arbeidsflate">Fant ikke prosessen.</main>;
@@ -70,8 +72,18 @@ export function Arbeidsflate({ prosessId, onApne, onTilbake }: Props) {
     onApne(p.id);
   };
 
+  const kanLeseInn = erProsjekt && !!prosess.innlesing;
+
   return (
-    <main class="arbeidsflate">
+    <main
+      class="arbeidsflate"
+      onDragOver={(e) => kanLeseInn && e.preventDefault()}
+      onDrop={(e) => {
+        if (!kanLeseInn || !e.dataTransfer?.files.length) return;
+        e.preventDefault();
+        setInnlesing([...e.dataTransfer.files]);
+      }}
+    >
       <header class="af-hode card" style={sted ? { '--linje': fargeVar(sted.kort.farge) } : undefined}>
         <div>
           <button class="velger-lenke" onClick={onTilbake}>
@@ -91,7 +103,12 @@ export function Arbeidsflate({ prosessId, onApne, onTilbake }: Props) {
         <div class="af-knapper">
           {erProsjekt ? (
             <>
-              <button class="btn btn-primary" onClick={() => setNy('prosjekt')}>
+              {kanLeseInn && (
+                <button class="btn btn-primary" onClick={() => setInnlesing([])} title="Dra inn ordrebekreftelse og/eller produksjonsordre">
+                  ⇩ Les inn ordre
+                </button>
+              )}
+              <button class={`btn ${kanLeseInn ? '' : 'btn-primary'}`} onClick={() => setNy('prosjekt')}>
                 + Nytt prosjekt
               </button>
               <button class="btn" onClick={() => setNy('tilbud')}>
@@ -157,6 +174,17 @@ export function Arbeidsflate({ prosessId, onApne, onTilbake }: Props) {
       )}
 
       {ny && <NyDialog type={ny} prosessId={prosessId} onLukk={() => setNy(null)} onOpprettet={onApne} />}
+      {innlesing && (
+        <InnlesingDialog
+          prosessId={prosessId}
+          filer={innlesing}
+          onLukk={() => setInnlesing(null)}
+          onFerdig={(id) => {
+            setInnlesing(null);
+            onApne(id);
+          }}
+        />
+      )}
     </main>
   );
 }
