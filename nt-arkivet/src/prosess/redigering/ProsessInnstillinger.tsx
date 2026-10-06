@@ -1,3 +1,4 @@
+import { brukesAvProsjekter, slettProsess } from '../../data/papirkurv';
 import { hentPost, stasjonerFor } from '../arkiv';
 import { KATEGORIER, type Hurtigtast, type ProsessType } from '../types';
 import { flyttI, RadKnapper, Tekst } from './Felter';
@@ -121,6 +122,32 @@ export function ProsessInnstillinger({ prosessId }: { prosessId: string }) {
           onLagre={(v) => lagre({ kjektAVite: v.trim() || undefined })}
         />
       )}
+
+      <SlettProsess prosessId={prosessId} navn={p.navn} nr={post.nr} />
     </aside>
+  );
+}
+
+function SlettProsess({ prosessId, navn, nr }: { prosessId: string; navn: string; nr: string }) {
+  const brukes = brukesAvProsjekter(prosessId);
+  return (
+    <div class="farlig-sone">
+      {brukes > 0 ? (
+        <p class="panel-hint">
+          {nr} brukes av {brukes} prosjekt{brukes > 1 ? 'er' : ''} og kan ikke slettes.
+        </p>
+      ) : (
+        <button
+          class="btn liten fare"
+          onClick={async () => {
+            if (!confirm(`Flytte «${navn}» (${nr}) til papirkurven? Den fjernes fra kartet, og kan gjenopprettes i 30 dager.`)) return;
+            await slettProsess(prosessId);
+            location.hash = '#/prosesser';
+          }}
+        >
+          Slett prosessen
+        </button>
+      )}
+    </div>
   );
 }

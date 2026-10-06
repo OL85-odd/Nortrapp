@@ -130,9 +130,6 @@ export function settFerdig(prosjektId: string, ferdig: boolean) {
   return endreProsjekt(prosjektId, (p) => ({ ...p, ferdig: ferdig ? new Date().toISOString() : undefined }));
 }
 
-export function slettProsjekt(prosjektId: string) {
-  return oppdater((d) => ({ ...d, prosjekter: d.prosjekter.filter((p) => p.id !== prosjektId) }));
-}
 
 /* ── Import fra den gamle «Staircon ABC»-appen ───────────────
    Den gamle appen lagret i nettleseren under «nortrapp.staircon.v2».

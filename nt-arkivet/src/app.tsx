@@ -10,6 +10,7 @@ import { ProsessEditor } from './views/ProsessEditor';
 import { Prosessarkiv } from './views/Prosessarkiv';
 import { QrSide } from './views/QrSide';
 import { LesVisning } from './views/LesVisning';
+import { Lagring } from './views/Lagring';
 import { hentProsjekt } from './prosess/prosjekter';
 import { hentPostForNr, sisteVersjon } from './prosess/arkiv';
 import { EditBar } from './edit/EditBar';
@@ -29,10 +30,12 @@ export type Rute =
   | { type: 'rediger'; id: string } // prosessredigering (strukturkart)
   | { type: 'les'; id: string } // instruks som bare leses
   | { type: 'qr'; id: string } // QR-lapp for utskrift
-  | { type: 'prosesser' }; // prosessarkivet
+  | { type: 'prosesser' } // prosessarkivet
+  | { type: 'lagring' }; // lagring, backup og papirkurv
 
 function lesRute(): Rute {
   if (/^#\/prosesser/.test(location.hash)) return { type: 'prosesser' };
+  if (/^#\/lagring/.test(location.hash)) return { type: 'lagring' };
   // QR-kodene peker på #/q/NT-MAS-001 — slå opp ID-en og send videre.
   const q = location.hash.match(/^#\/q\/([\w-]+)/);
   if (q) {
@@ -48,7 +51,7 @@ function lesRute(): Rute {
 }
 
 function skrivRute(r: Rute) {
-  location.hash = r.type === 'hjem' ? '#/' : r.type === 'prosesser' ? '#/prosesser' : `#/${r.type}/${r.id}`;
+  location.hash = r.type === 'hjem' ? '#/' : r.type === 'prosesser' || r.type === 'lagring' ? `#/${r.type}` : `#/${r.type}/${r.id}`;
 }
 
 export function App() {
@@ -96,6 +99,8 @@ export function App() {
         <LesVisning id={rute.id} onTilbake={() => history.back()} />
       ) : rute.type === 'qr' ? (
         <QrSide id={rute.id} onTilbake={() => history.back()} />
+      ) : rute.type === 'lagring' ? (
+        <Lagring onTilbake={() => skrivRute({ type: 'hjem' })} />
       ) : rute.type === 'prosesser' ? (
         <Prosessarkiv onTilbake={() => skrivRute({ type: 'hjem' })} />
       ) : (

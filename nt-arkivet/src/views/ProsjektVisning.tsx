@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { aktivtSteg, faseFor, fremdrift, naboSteg, nesteUgjorte, skjulteSteg, sti, svarTekst } from '../prosess/motor';
 import type { Prosess, Prosjekt, Steg } from '../prosess/types';
-import { gjorOmTilProsjekt, hentProsjekt, oppgraderVersjon, prosessFor, settAktivt, settFerdig, settTilbudsinfo, settUtfort, slettProsjekt, svar } from '../prosess/prosjekter';
+import { gjorOmTilProsjekt, hentProsjekt, oppgraderVersjon, prosessFor, settAktivt, settFerdig, settTilbudsinfo, settUtfort, svar } from '../prosess/prosjekter';
 import { hentPost, nyesteVersjonsnr } from '../prosess/arkiv';
 import { redigerer } from '../edit/state';
 import { StegEditor } from '../prosess/redigering/StegEditor';
@@ -16,6 +16,7 @@ import { modus, type Modus } from '../ui/settings';
 import { useFeltVerdi } from '../ui/hooks';
 import { DokumentDialog } from '../import/Dokumenter';
 import { InnlesingDialog } from '../import/InnlesingDialog';
+import { slettProsjekt } from '../data/papirkurv';
 import '../prosess/ui/prosess.css';
 
 const MODUSER: { id: Modus; navn: string }[] = [
@@ -201,9 +202,10 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
 
       <FaseStripe faser={faser} prosjekt={p} aktivFase={aktivFase} skjulte={skjulte} onVelgFase={velgFase} />
 
-      {fr.prosent === 100 && skjulte === 0 && p.type !== 'tilbud' && (
+      {(p.ferdig || fr.prosent === 100) && p.type !== 'tilbud' && (
         <div class="ferdig-banner card">
           <span class="dot">{p.ferdig ? `Ferdig ${new Date(p.ferdig).toLocaleDateString('nb-NO')}` : 'Alle steg er utført'}</span>
+          {!p.ferdig && skjulte > 0 && <span class="panel-hint">{skjulte} steg venter fortsatt på et valg. Du kan likevel markere prosjektet som ferdig.</span>}
           {p.ferdig ? (
             <button class="btn" onClick={() => settFerdig(p.id, false)}>
               Gjenåpne
@@ -239,7 +241,7 @@ function Visning({ p, onTilbake }: { p: Prosjekt; onTilbake: () => void }) {
                 <button
                   class="btn liten fare"
                   onClick={async () => {
-                    if (!confirm(`Slette «${p.nummer}» med all logg? Dette kan ikke angres.`)) return;
+                    if (!confirm(`Flytte «${p.nummer}» til papirkurven? Det kan gjenopprettes i 30 dager.`)) return;
                     await slettProsjekt(p.id);
                     onTilbake();
                   }}

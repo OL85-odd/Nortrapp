@@ -205,6 +205,8 @@ export interface ProsessPost {
   kategori: Kategori;
   opprettet: string;
   versjoner: ProsessVersjon[];
+  /** Bare i papirkurven: stasjonene prosessen var koblet til, så koblingen kan gjenopprettes. */
+  stasjoner?: string[];
 }
 
 /* ── Prosjekter ────────────────────────────────────────────── */

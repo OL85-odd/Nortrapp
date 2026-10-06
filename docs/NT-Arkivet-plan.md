@@ -261,24 +261,43 @@ Dette skal rettes eller avklares:
 **Ikke med nå:** SharePoint, ekte innlogging, AI-tjenester, integrasjon med den
 nye kalkulasjonsappen (vurderes når den finnes). Brukere velger initialer ved oppstart.
 
-## 11. Drift på serveren
+## 11. Lagring, backup og drift
 
 Verken Git eller Next.js trengs for å drifte. Git er bare for kildekoden.
-I bunn ligger ett lite program på serveren (Windows, driftes av IT-konsulent,
-Nortrapp har admin-tilgang). Det serverer appen og lagrer i en lesbar mappestruktur:
+
+**Fellesmappe i stedet for serverprogram.** Appen skriver direkte til en mappe på
+serverens disk M: (`\\Ntrapp-App-01\Vol1`), f.eks. `M:\NT-Arkivet`. Dette bruker
+filsystem-tilgangen i Chrome og Edge, også fra en lokal HTML-fil. Det trengs ingen
+installasjon på serveren.
 
 ```
-NT-Arkivet\
-  app\                       ← selve nettsiden
+M:\NT-Arkivet\
   data\
-    kart.json                 ← kort, stasjoner og revisjoner
-    brukere.json
-    prosedyrer\NT-014\        ← prosedyre.json, bilder\, revisjoner\
-    prosjekter\2026\H483-26\  ← prosjekt.json, logg.txt, dokumenter\
-  backup\                    ← automatisk kopi hver natt
+    innstillinger.json, kart.json, brukere.json, papirkurv.json
+    prosesser\NT-PRO-001.json          ← alle versjoner
+    prosjekter\2026\H430-26 [p-…]\     ← prosjekt.json, logg.txt, dokumenter\
+    endret.txt                         ← merke som viser at noe er endret
+  media\                               ← bilder og innleste dokumenter (endres aldri)
+  backup\nt-arkivet-ÅÅÅÅ-MM-DD.zip      ← daglig kopi av data\, beholdes i 30 dager
+  LES-MEG.txt
 ```
 
-Programmet leveres som én `.exe` som kjører som Windows-tjeneste.
+- **Trygg skriving:** nettleseren skriver til en midlertidig fil og bytter den inn
+  først når den er ferdig.
+- **To PC-er samtidig:** før en fil skrives, sjekkes det om en annen PC har endret den.
+  Da flettes endringene, så avkrysninger og logglinjer fra begge beholdes. Andre PC-er
+  henter endringer hvert 15. sekund og når vinduet får fokus.
+- **Daglig kopi:** den første som åpner appen hver dag lager dagens zip.
+- **Papirkurv:** slettede prosjekter og prosesser kan gjenopprettes i 30 dager.
+  Prosessnumre brukes aldri på nytt.
+- **Manuell backup:** én zip med alt (også media og utkast), samme struktur som mappen.
+  Den kan gjenopprettes på hvilken som helst PC.
+- **Serverens egen backup** og «Tidligere versjoner» på M: dekker hele mappen.
+  Spørsmål til IT: hvilken løsning brukes, hvor ofte kjører den, ligger det en kopi
+  utenfor bygget, og når ble en gjenoppretting sist testet.
+
+Senere kan et lite serverprogram erstatte fellesmappen, f.eks. for tilgang fra mobil
+via QR. Lagringen ligger bak en adapter, så resten av appen merker ikke byttet.
 
 ## 12. Åpne punkter
 

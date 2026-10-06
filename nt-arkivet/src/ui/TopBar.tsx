@@ -1,3 +1,5 @@
+import { mappe } from '../data/lagring/mappe';
+import { sisteBackup, trengerBackup } from '../data/lagring/backup';
 import { useEffect, useState } from 'preact/hooks';
 import { bruker, erMork, tema, type Tema } from './settings';
 import { db } from '../data/store';
@@ -53,6 +55,7 @@ export function TopBar({ onByttBruker, onRediger }: { onByttBruker: () => void; 
       </div>
 
       <div class="topbar-hoyre">
+        <LagringMerke />
         <div class="segmented" role="group" aria-label="Fargetema">
           {TEMA.map((t) => (
             <button key={t.id} aria-pressed={tema.value === t.id} onClick={() => (tema.value = t.id)}>
@@ -77,5 +80,27 @@ export function TopBar({ onByttBruker, onRediger }: { onByttBruker: () => void; 
         </button>
       </div>
     </header>
+  );
+}
+
+/** Viser hvor innholdet lagres, og varsler når noe trenger oppmerksomhet. */
+function LagringMerke() {
+  const m = mappe.value;
+  const [klasse, tekst, tittel] =
+    m.status === 'tilkoblet'
+      ? ['ok', 'Fellesmappe', `Lagres i fellesmappen «${m.navn}»`]
+      : m.status === 'feil'
+        ? ['fare', 'Lagring feilet', m.melding ?? '']
+        : m.status === 'mangler-tilgang'
+          ? ['varsel', 'Koble til mappen', 'Fellesmappen trenger tilgang på nytt']
+          : m.status === 'kobler'
+            ? ['', 'Kobler til …', '']
+            : trengerBackup(db.value, sisteBackup.value)
+              ? ['varsel', 'Ta backup', 'Innholdet ligger bare i denne nettleseren. Ta en backup.']
+              : ['', 'Lokal', 'Innholdet ligger bare i denne nettleseren'];
+  return (
+    <a class={`lagring-merke ${klasse}`} href="#/lagring" title={tittel}>
+      <span>{tekst}</span>
+    </a>
   );
 }

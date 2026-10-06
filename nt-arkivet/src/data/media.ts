@@ -56,7 +56,57 @@ export async function lagreMedia(fil: Blob): Promise<string> {
 export async function lagreFil(fil: Blob): Promise<string> {
   const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   await transaksjon('readwrite', (s) => s.put(fil, id));
+  await mediaKroker.lagret?.(id, fil);
   return 'media:' + id;
+}
+
+/** Fellesmappen kobler seg på her: nye filer skrives dit, og filer som mangler lokalt hentes derfra. */
+export const mediaKroker: { lagret?: (id: string, fil: Blob) => Promise<void>; hent?: (id: string) => Promise<Blob | null> } = {};
+
+const ENDELSER: Record<string, string> = {
+  'image/webp': 'webp',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/svg+xml': 'svg',
+  'application/pdf': 'pdf',
+  'video/mp4': 'mp4',
+};
+
+export function filendelse(fil: Blob): string {
+  return ENDELSER[fil.type] ?? 'bin';
+}
+
+export const TYPER: Record<string, string> = Object.fromEntries(Object.entries(ENDELSER).map(([t, e]) => [e, t]));
+
+/** Alle filer i den lokale mediabasen (til backup). */
+export async function alleMedia(): Promise<Map<string, Blob>> {
+  const db = await apne();
+  return new Promise((ok, feil) => {
+    const ut = new Map<string, Blob>();
+    const req = db.transaction(LAGER, 'readonly').objectStore(LAGER).openCursor();
+    req.onsuccess = () => {
+      const c = req.result;
+      if (!c) return ok(ut);
+      ut.set(String(c.key), c.value as Blob);
+      c.continue();
+    };
+    req.onerror = () => feil(req.error);
+  });
+}
+
+/** Legger en fil inn med kjent id (gjenoppretting og henting fra fellesmappen). */
+export async function settMedia(id: string, fil: Blob) {
+  await transaksjon('readwrite', (s) => s.put(fil, id));
+}
+
+export async function hentMedia(ref: string): Promise<Blob | null> {
+  const id = ref.replace(/^media:/, '');
+  const lokal = await transaksjon<Blob | undefined>('readonly', (s) => s.get(id) as IDBRequest<Blob | undefined>).catch(() => undefined);
+  if (lokal) return lokal;
+  const fra = await mediaKroker.hent?.(id);
+  if (fra) await settMedia(id, fra);
+  return fra ?? null;
 }
 
 const urler = new Map<string, string>();
@@ -64,7 +114,7 @@ const urler = new Map<string, string>();
 export async function mediaUrl(ref: string): Promise<string | null> {
   if (urler.has(ref)) return urler.get(ref)!;
   try {
-    const blob = await transaksjon<Blob | undefined>('readonly', (s) => s.get(ref.slice(6)) as IDBRequest<Blob | undefined>);
+    const blob = await hentMedia(ref);
     if (!blob) return null;
     const url = URL.createObjectURL(blob);
     urler.set(ref, url);

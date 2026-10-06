@@ -60,6 +60,32 @@ describe('Staircon-stien', () => {
   });
 });
 
+describe('ferdige prosjekter', () => {
+  // Svar på alle spørsmål som dukker opp på stien, med ulike valg, til ingen flere kommer.
+  // Da skal ingenting være «skjult bak valg» — ellers kan prosjektet aldri fullføres.
+  const besvar = (velg: (alt: string[]) => Svar) => {
+    const svar: Record<string, Svar> = {};
+    for (let runde = 0; runde < 50; runde++) {
+      const neste = flatSti(STAIRCON, svar).find((s) => s.valg && svar[s.id] === undefined);
+      if (!neste) break;
+      const v = neste.valg!;
+      svar[neste.id] = velg(v.type === 'janei' ? ['ja', 'nei'] : v.alternativer.map((a) => a.id));
+      if (v.type === 'flere' && !Array.isArray(svar[neste.id])) svar[neste.id] = [svar[neste.id] as string];
+    }
+    return svar;
+  };
+  for (const [navn, velg] of [
+    ['første valg', (a: string[]) => a[0]],
+    ['siste valg', (a: string[]) => a[a.length - 1]],
+    ['midterste valg', (a: string[]) => a[Math.floor(a.length / 2)]],
+    ['ingen tillegg', (a: string[]) => (a.includes('gelender') ? [] : a[1] ?? a[0])],
+  ] as [string, (a: string[]) => Svar][]) {
+    it(`ingen skjulte steg når alt er besvart (${navn})`, () => {
+      expect(skjulteSteg(STAIRCON, besvar(velg))).toBe(0);
+    });
+  }
+});
+
 describe('fremdrift og navigasjon', () => {
   it('teller utførte og finner forlatte grener', () => {
     const p = { svar: { ...rett, e01: 'nei' }, utfort: { e03: { tid: '', brukerId: null }, k01: { tid: '', brukerId: null } } };

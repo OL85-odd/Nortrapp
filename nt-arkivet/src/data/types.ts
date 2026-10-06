@@ -91,7 +91,21 @@ export interface Database {
   innstillinger: {
     /** Adressen appen har på serveren, f.eks. http://nt-arkivet/. Brukes i QR-koder. */
     serverAdresse?: string;
+    /** Numre fra prosesser som er slettet for godt. Brukes aldri på nytt (QR-lapper). */
+    brukteNr?: string[];
   };
   /** SHA-256 av PIN-koden for redigeringsmodus. Ikke ekte sikkerhet — hindrer uhell. */
   pinHash?: string;
+  /** Slettede prosjekter og prosesser. Kan gjenopprettes i 30 dager. */
+  papirkurv: PapirkurvPost[];
+}
+
+export interface PapirkurvPost {
+  id: string;
+  type: 'prosjekt' | 'prosess';
+  navn: string;
+  slettet: string;
+  brukerId: string | null;
+  prosjekt?: Prosjekt;
+  prosess?: ProsessPost;
 }

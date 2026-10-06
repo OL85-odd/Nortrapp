@@ -129,6 +129,10 @@ export function migrer(d: Gammel): Database {
       ),
     };
   }
+  if (d.skjema < 7) {
+    // v7: papirkurv for slettede prosjekter og prosesser.
+    d = { ...d, skjema: 7, papirkurv: d.papirkurv ?? [] };
+  }
   return d as Database;
 }
 
@@ -151,6 +155,16 @@ export async function oppdater(endre: (d: Database) => Database) {
   const neste = { ...endre(db.value), oppdatert: new Date().toISOString().slice(0, 10) };
   db.value = neste;
   await lager.lagre(neste);
+  lagringskrok.etter?.(neste);
+}
+
+/** Fellesmappen kobler seg på her og får beskjed om hver endring. */
+export const lagringskrok: { etter?: (d: Database) => void } = {};
+
+/** Setter databasen uten å varsle fellesmappen (brukes når endringen kom derfra). */
+export function settDbStille(d: Database) {
+  db.value = d;
+  void lager.lagre(d);
 }
 
 /** Alle stasjoner i et kort, inkludert grener. */

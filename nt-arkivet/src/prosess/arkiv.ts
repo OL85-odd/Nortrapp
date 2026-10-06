@@ -44,11 +44,16 @@ export function nyesteVersjonsnr(id: string): number {
   return post ? sisteVersjon(post).nr : 1;
 }
 
+/** Numre som er i papirkurven eller har vært brukt av slettede prosesser. Brukes aldri på nytt. */
+function tidligereNr(): string[] {
+  const d = db.value;
+  return [...(d.papirkurv ?? []).flatMap((p) => (p.prosess ? [p.prosess.nr] : [])), ...(d.innstillinger.brukteNr ?? [])];
+}
+
 /** Neste ledige nummer i kategorien: NT-MAS-001, NT-MAS-002 … */
-export function nesteNr(kategori: Kategori, alle: ProsessPost[] = db.value.prosesser): string {
-  const brukt = alle
-    .filter((p) => p.kategori === kategori)
-    .map((p) => Number(p.nr.split('-').pop()))
+export function nesteNr(kategori: Kategori, alle: ProsessPost[] = db.value.prosesser, tidligere: string[] = tidligereNr()): string {
+  const brukt = [...alle.filter((p) => p.kategori === kategori).map((p) => p.nr), ...tidligere.filter((n) => n.startsWith(`NT-${kategori}-`))]
+    .map((nr) => Number(nr.split('-').pop()))
     .filter((n) => !Number.isNaN(n));
   const neste = (brukt.length ? Math.max(...brukt) : 0) + 1;
   return `NT-${kategori}-${String(neste).padStart(3, '0')}`;

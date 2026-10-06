@@ -132,7 +132,7 @@ describe('arkiv', () => {
     delete v4.prosesser;
     delete v4.innstillinger;
     const d = migrer(v4);
-    expect(d.skjema).toBe(6);
+    expect(d.skjema).toBe(7);
     expect(d.prosesser[0].nr).toBe('NT-PRO-001');
     expect(d.prosjekter[0].prosessVersjon).toBe(1);
     const staircon = d.kort[0].stasjoner.flatMap((s) => [s, ...(s.grener ?? [])]).find((s) => s.id === 'staircon');

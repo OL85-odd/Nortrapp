@@ -59,3 +59,13 @@ Planview som PDF eller bilde. Alt leses lokalt i nettleseren:
 - Reglene redigeres under *Rediger prosess → Innlesing av ordre* og kan testes der.
 
 Kundedokumenter skal ikke i Git. Testene i `src/import/tolk.test.ts` bruker oppdiktede linjer.
+
+## Lagring og backup
+
+Se *Lagring og backup* i appen (`#/lagring`) og `docs/NT-Arkivet-plan.md` kapittel 11.
+
+- **Fellesmappe** (`src/data/lagring/mappe.ts`): databasen skrives som lesbare filer
+  (`format.ts`). Endringer fra to PC-er flettes (`flett`), og det lages én daglig zip.
+- **Manuell backup** (`backup.ts`) gir én zip med alt. Gjenoppretting gjelder både zip-filer
+  og daglige kopier.
+- **Papirkurv** (`src/data/papirkurv.ts`) beholder det som slettes i 30 dager.

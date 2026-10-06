@@ -22,13 +22,45 @@ export function gjelder(b: Betingelse | undefined, svar: Record<string, Svar>): 
   return gitt.some((x) => onsket.includes(x));
 }
 
-/** Avhenger betingelsen av et spørsmål som ikke er besvart ennå? */
-export function venterPaSvar(b: Betingelse | undefined, svar: Record<string, Svar>): boolean {
-  if (!b) return false;
-  if ('alle' in b) return b.alle.some((x) => venterPaSvar(x, svar));
-  if ('noen' in b) return b.noen.some((x) => venterPaSvar(x, svar));
-  if ('ikke' in b) return venterPaSvar(b.ikke, svar);
-  return svar[b.steg] === undefined;
+/**
+ * Kan et spørsmål fortsatt dukke opp på stien? Nei hvis det er slettet, eller hvis
+ * regelen dets (eller fasens) allerede er avgjort til «gjelder ikke».
+ */
+function kanKomme(prosess: Prosess, stegId: string, svar: Record<string, Svar>, dybde: number): boolean {
+  const fase = prosess.faser.find((f) => f.steg.some((s) => s.id === stegId));
+  if (!fase || dybde > 20) return false;
+  const steg = fase.steg.find((s) => s.id === stegId)!;
+  return utfall(fase.gjelder, svar, prosess, dybde + 1) !== false && utfall(steg.gjelder, svar, prosess, dybde + 1) !== false;
+}
+
+/**
+ * Tre mulige utfall for en regel: true (gjelder), false (gjelder ikke) eller
+ * undefined (avhenger av et spørsmål som ikke er besvart, men som kan komme).
+ */
+function utfall(b: Betingelse | undefined, svar: Record<string, Svar>, prosess: Prosess | undefined, dybde = 0): boolean | undefined {
+  if (!b) return true;
+  if ('alle' in b) {
+    const u = b.alle.map((x) => utfall(x, svar, prosess, dybde));
+    return u.includes(false) ? false : u.includes(undefined) ? undefined : true;
+  }
+  if ('noen' in b) {
+    const u = b.noen.map((x) => utfall(x, svar, prosess, dybde));
+    return u.includes(true) ? true : u.includes(undefined) ? undefined : false;
+  }
+  if ('ikke' in b) {
+    const u = utfall(b.ikke, svar, prosess, dybde);
+    return u === undefined ? undefined : !u;
+  }
+  if (svar[b.steg] === undefined) return !prosess || kanKomme(prosess, b.steg, svar, dybde) ? undefined : false;
+  return gjelder(b, svar);
+}
+
+/**
+ * Avhenger betingelsen av et spørsmål som ikke er besvart ennå — og som fortsatt
+ * kan dukke opp? Med `prosess` regnes spørsmål som aldri vil komme som avgjort.
+ */
+export function venterPaSvar(b: Betingelse | undefined, svar: Record<string, Svar>, prosess?: Prosess): boolean {
+  return utfall(b, svar, prosess) === undefined;
 }
 
 export interface SynligFase extends Omit<Fase, 'steg'> {
@@ -52,10 +84,10 @@ export function skjulteSteg(prosess: Prosess, svar: Record<string, Svar>): numbe
   let n = 0;
   for (const f of prosess.faser) {
     if (!gjelder(f.gjelder, svar)) {
-      if (venterPaSvar(f.gjelder, svar)) n += f.steg.length;
+      if (venterPaSvar(f.gjelder, svar, prosess)) n += f.steg.length;
       continue;
     }
-    n += f.steg.filter((s) => !gjelder(s.gjelder, svar) && venterPaSvar(s.gjelder, svar)).length;
+    n += f.steg.filter((s) => !gjelder(s.gjelder, svar) && venterPaSvar(s.gjelder, svar, prosess)).length;
   }
   return n;
 }

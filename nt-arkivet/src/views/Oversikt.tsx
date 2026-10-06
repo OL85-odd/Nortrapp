@@ -73,6 +73,9 @@ export function Oversikt({ rute, onNaviger }: Props) {
           <a class="btn oversikt-arkiv" href="#/prosesser">
             Prosessarkiv · {db.value.prosesser.length}
           </a>
+          <a class="btn oversikt-arkiv" href="#/lagring">
+            Lagring og backup
+          </a>
         </div>
         <dl class="tall">
           <div>

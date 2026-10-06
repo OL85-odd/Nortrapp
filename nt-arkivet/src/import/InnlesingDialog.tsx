@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { lagreFil } from '../data/media';
+import { kopierDokument } from '../data/lagring/mappe';
 import { gjeldende } from '../prosess/arkiv';
 import { hentProsjekt, lesInn, opprett, prosessFor, type InnlestVerdi } from '../prosess/prosjekter';
 import type { DokType, Prosess, Prosjekt, ProsjektDokument, Svar } from '../prosess/types';
@@ -199,6 +200,8 @@ export function InnlesingDialog({ prosessId, prosjektId, filer, onLukk, onFerdig
                 id = (await opprett({ prosessId, type: 'prosjekt', nummer: nr, kalkylenr: v('kalkylenr'), kunde: v('kunde') })).id;
               }
               await lesInn(id, verdier, dokumenter);
+              // Leselig kopi i prosjektmappen på serveren (hvis fellesmappe er i bruk).
+              for (const d of klare) await kopierDokument(id, `${DOK_NAVN[d.type]} - ${d.fil.name}`, d.fil);
               onFerdig(id);
             } finally {
               setLagrer(false);
