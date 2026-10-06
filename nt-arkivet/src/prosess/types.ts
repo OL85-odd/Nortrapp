@@ -66,7 +66,8 @@ export interface Steg {
   valg?: Valg;
   gjelder?: Betingelse;
   /** Markerer nytt/endret innhold i denne versjonen, så det kan kontrolleres. */
-  merknad?: { type: 'ny' | 'endret'; tekst: string };
+  /** Merknad til den som kontrollerer innholdet. «test» = forslag som må prøves i programmet. */
+  merknad?: { type: 'ny' | 'endret' | 'test'; tekst: string };
 }
 
 export interface Fase {
@@ -251,3 +252,5 @@ export interface Prosjekt {
   dokumenter?: ProsjektDokument[];
   ferdig?: string;
 }
+
+export const MERKNAD: Record<'ny' | 'endret' | 'test', string> = { ny: 'Nytt i v3.0', endret: 'Endret i v3.0', test: 'Må testes' };

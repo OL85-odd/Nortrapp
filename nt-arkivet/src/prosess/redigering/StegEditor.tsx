@@ -1,3 +1,4 @@
+import { MERKNAD } from '../types';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { db } from '../../data/store';
@@ -98,7 +99,7 @@ export function StegEditor({ prosessId, stegId, onVelg, onLukk }: Props) {
 
           {steg.merknad && (
             <div class={`merknad ${steg.merknad.type}`}>
-              <span class="label">{steg.merknad.type === 'ny' ? 'Nytt i v3.0' : 'Endret i v3.0'}</span> {steg.merknad.tekst}
+              <span class="label">{MERKNAD[steg.merknad.type]}</span> {steg.merknad.tekst}
               <button class="btn liten" onClick={() => lagre({ merknad: undefined })}>
                 Kontrollert – fjern merknaden
               </button>

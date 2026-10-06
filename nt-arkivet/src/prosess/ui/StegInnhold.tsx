@@ -1,3 +1,4 @@
+import { MERKNAD } from '../types';
 import { useState } from 'preact/hooks';
 import type { Prosjekt, Steg } from '../types';
 import { bildeUrl } from '../bilder';
@@ -21,7 +22,7 @@ export function StegInnhold({ steg, prosjekt, kompakt }: { steg: Steg; prosjekt?
     <div class={`steg-innhold ${kompakt ? 'kompakt' : ''}`}>
       {steg.merknad && (
         <p class={`merknad ${steg.merknad.type}`}>
-          <span class="label">{steg.merknad.type === 'ny' ? 'Nytt i v3.0' : 'Endret i v3.0'}</span> {steg.merknad.tekst}
+          <span class="label">{MERKNAD[steg.merknad.type]}</span> {steg.merknad.tekst}
         </p>
       )}
 

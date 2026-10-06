@@ -121,7 +121,7 @@ export const STAIRCON_POST: ProsessPost = {
 };
 
 export const SEED: Database = {
-  skjema: 7,
+  skjema: 8,
   papirkurv: [],
   oppdatert: '2026-10-02',
   brukere: [

@@ -8,6 +8,7 @@ import { SEED } from '../../data/seed';
 import type { ProsessPost } from '../types';
 import { beskrivProsessEndringer } from './endringer';
 import * as op from './ops';
+import { medDeltBjelkelag } from '../staircon/deltBjelkelag';
 
 const kopi = () => structuredClone(STAIRCON);
 const titler = (faseId: string, p = kopi()) => p.faser.find((f) => f.id === faseId)!.steg.map((s) => s.id);
@@ -132,10 +133,42 @@ describe('arkiv', () => {
     delete v4.prosesser;
     delete v4.innstillinger;
     const d = migrer(v4);
-    expect(d.skjema).toBe(7);
+    expect(d.skjema).toBe(8);
     expect(d.prosesser[0].nr).toBe('NT-PRO-001');
     expect(d.prosjekter[0].prosessVersjon).toBe(1);
     const staircon = d.kort[0].stasjoner.flatMap((s) => [s, ...(s.grener ?? [])]).find((s) => s.id === 'staircon');
     expect(staircon?.prosessId).toBe('staircon');
+  });
+});
+
+describe('delt bjelkelagsåpning', () => {
+  it('fasen kommer rett etter «Egenskaper – Trapp», bare når tillegget er valgt', () => {
+    const ids = STAIRCON.faser.map((f) => f.id);
+    expect(ids[ids.indexOf('egenskaper') + 1]).toBe('deltbjelkelag');
+    const med = flatSti(STAIRCON, { tillegg: ['delt_bjelkelag'] }).map((s) => s.id);
+    expect(med).toEqual(expect.arrayContaining(['db1', 'db2', 'db3']));
+    expect(flatSti(STAIRCON, { tillegg: [] }).some((s) => s.id === 'db1')).toBe(false);
+  });
+
+  it('legges ikke inn to ganger', () => {
+    expect(medDeltBjelkelag(STAIRCON)).toBeNull();
+  });
+
+  it('migrering til skjema 8 publiserer en ny versjon oppå en redigert Staircon', () => {
+    const gammel = structuredClone(STAIRCON);
+    gammel.faser = gammel.faser.filter((f) => f.id !== 'deltbjelkelag');
+    const tillegg = gammel.faser[0].steg.find((s) => s.id === 'tillegg')!;
+    if (tillegg.valg?.type === 'flere') tillegg.valg.alternativer = tillegg.valg.alternativer.filter((a) => a.id !== 'delt_bjelkelag');
+    gammel.navn = 'Staircon (redigert)';
+    const v7 = { ...structuredClone(SEED), skjema: 7 } as unknown as Record<string, unknown> & { prosesser: ProsessPost[] };
+    v7.prosesser = [{ ...v7.prosesser[0], versjoner: [1, 2].map((nr) => ({ nr, dato: '', brukerId: null, kommentar: '', endringer: [], prosess: gammel })) }];
+    const d = migrer(v7);
+    const post = d.prosesser[0];
+    expect(post.versjoner.map((v) => v.nr)).toEqual([1, 2, 3]);
+    const ny = post.versjoner[2].prosess;
+    expect(ny.navn).toBe('Staircon (redigert)'); // egne endringer beholdes
+    expect(ny.faser.some((f) => f.id === 'deltbjelkelag')).toBe(true);
+    expect(ny.hurtigtaster?.some((h) => h.tast === 'Ctrl + F7')).toBe(true);
+    expect(post.versjoner[2].endringer).toEqual(expect.arrayContaining(['Ny fase: Delt bjelkelagsåpning']));
   });
 });

@@ -3,6 +3,8 @@ import type { Database, Farge, Kort, KortType, Stasjon } from './types';
 import { SEED, STAIRCON_POST } from './seed';
 import { STAIRCON_INNLESING } from '../prosess/staircon/innlesing';
 import type { ProsessPost } from '../prosess/types';
+import { medDeltBjelkelag } from '../prosess/staircon/deltBjelkelag';
+import { beskrivProsessEndringer } from '../prosess/redigering/endringer';
 
 /* ─────────────────────────────────────────────────────────────
    Datalaget. Appen snakker bare med en «Lager»-adapter, så vi kan
@@ -132,6 +134,35 @@ export function migrer(d: Gammel): Database {
   if (d.skjema < 7) {
     // v7: papirkurv for slettede prosjekter og prosesser.
     d = { ...d, skjema: 7, papirkurv: d.papirkurv ?? [] };
+  }
+  if (d.skjema < 8) {
+    // v8: Staircon får tillegget «Delt bjelkelagsåpning» med egen fase.
+    //     Publiseres som en ny versjon oppå den gjeldende (også om den er redigert i appen),
+    //     så prosjekter som er i gang kan velge å oppgradere.
+    d = {
+      ...d,
+      skjema: 8,
+      prosesser: d.prosesser.map((p: ProsessPost) => {
+        if (p.id !== 'staircon' || !p.versjoner.length) return p;
+        const siste = p.versjoner[p.versjoner.length - 1];
+        const ny = medDeltBjelkelag(siste.prosess);
+        if (!ny) return p;
+        return {
+          ...p,
+          versjoner: [
+            ...p.versjoner,
+            {
+              nr: siste.nr + 1,
+              dato: new Date().toISOString(),
+              brukerId: null,
+              kommentar: 'Nytt tillegg: Delt bjelkelagsåpning (skjeve vegger og bjelkelag)',
+              endringer: beskrivProsessEndringer(siste.prosess, ny),
+              prosess: ny,
+            },
+          ],
+        };
+      }),
+    };
   }
   return d as Database;
 }

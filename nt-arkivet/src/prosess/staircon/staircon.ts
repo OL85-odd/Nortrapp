@@ -1,4 +1,5 @@
 import { STAIRCON_INNLESING } from './innlesing';
+import { medDeltBjelkelag } from './deltBjelkelag';
 import type { Prosess } from '../types';
 import { ALLTID, STAIRCON_TASTER } from './hurtigtaster';
 
@@ -19,7 +20,7 @@ import { ALLTID, STAIRCON_TASTER } from './hurtigtaster';
 const SVING = { steg: 'trappetype', er: ['svingtrapp_u', 'svingtrapp_90'] };
 const tillegg = (...id: string[]) => ({ steg: 'tillegg', er: id });
 
-export const STAIRCON: Prosess = {
+const STAIRCON_GRUNN: Prosess = {
   id: 'staircon',
   navn: 'Staircon',
   versjon: '3.0',
@@ -884,3 +885,6 @@ export const STAIRCON: Prosess = {
     },
   ],
 };
+
+/** Staircon med «Delt bjelkelagsåpning» (se deltBjelkelag.ts). */
+export const STAIRCON: Prosess = medDeltBjelkelag(STAIRCON_GRUNN) ?? STAIRCON_GRUNN;

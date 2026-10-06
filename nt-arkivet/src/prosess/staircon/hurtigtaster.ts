@@ -28,6 +28,8 @@ export const HURTIGTASTER: Record<string, Hurtigtast> = Object.fromEntries(
       ['Alt + Y', 'Flytt punkt bare i Y-retning (sideriss)'],
       ['Alt + Z', 'Flytt trinnpunkt, behold senter (arbeidsvy)'],
       ['Ctrl + E', 'Markere punkter'],
+      ['Ctrl + F5', 'Vis/skjul bjelkelagsåpninger'],
+      ['Ctrl + F7', 'Vis/skjul vanger'],
 
       ['Ctrl + N', 'Nytt prosjekt'],
       ['Ctrl + O', 'Åpne prosjekt'],
