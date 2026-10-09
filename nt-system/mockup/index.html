@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NT-System · mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="stil.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="topbar-merke" href="#/">
+    <img class="logo lys" src="logo-farge.png" alt="Nortrapp">
+    <img class="logo mork" src="logo-hvit.png" alt="Nortrapp">
+    <span class="label">NT-System</span>
+  </a>
+  <div class="topbar-tid"><span class="dot topbar-klokke" id="klokke">--:--</span><span class="topbar-dato" id="dato"></span></div>
+  <div class="topbar-hoyre">
+    <label class="rolle-velger"><span class="label">Vis som</span>
+      <select id="rolle"></select>
+    </label>
+    <div class="segmented" role="group" aria-label="Tema">
+      <button data-tema="light">Lys</button><button data-tema="auto" aria-pressed="true">Auto</button><button data-tema="dark">Mørk</button>
+    </div>
+    <button class="bruker-knapp dot" id="bruker" title="Bytt bruker (PIN)">OL</button>
+  </div>
+</header>
+
+<div class="ramme">
+  <nav class="meny" id="meny"></nav>
+  <main id="side"></main>
+</div>
+
+<div class="mockup-merke">Mockup · eksempeldata</div>
+<div id="modal-rot"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
